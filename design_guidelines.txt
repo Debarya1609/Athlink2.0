@@ -1,0 +1,79 @@
+ATHLINK DESIGN SYSTEM & PROFILE PAGE GUIDELINES
+===============================================
+
+1. OVERALL AESTHETIC: "Soothed Premium"
+The platform has transitioned to a sophisticated, light-foundation design. The goal is a highly readable, clean, and modern layout that feels premium, energetic, but not visually exhausting. It relies on subtle "floating" shadows, ample padding, and rounded, friendly components.
+
+2. GLOBAL COLOR TOKENS
+-----------------------------------------------
+Backgrounds & Surfaces:
+- App Background: #F0F2F5 (Blue-Grey / Alabaster) -> Used for the main body background (`bg-[#F0F2F5]` or `var(--background)`).
+- Card/Component Surface: #FFFFFF (White) -> Used for all floating content panels, sidebars, and posts.
+
+Text & Typography:
+- Primary Text: #334155 (Charcoal) -> High contrast but softer than pure black.
+- Secondary/Muted Text: #64748B (Slate) -> Used for timestamps, subtitles, empty states.
+
+Brand & Actions:
+- Brand Black: #000000 -> Used for main CTA buttons (e.g., "Create Post"), key brand elements.
+- Brand Gold: #D4AF37 -> Used as an accent or in the logo.
+- Primary Action: #2E5BFF (Electric Cobalt) -> Used for main interactive elements, active navigation states, primary buttons (e.g., active "Post" button).
+- Highlights/Accents: #00BFFF (Cerulean), #0D9488 (Teal, used for secondary action buttons like "Follow"), #FF4B4B (Coral, used for notification badges).
+
+Role Specific Badges:
+- Athlete: #3B82F6 (Blue)
+- Coach: #10B981 (Green)
+- Academy/Organization: #D4AF37 (Gold)
+
+Border:
+- Subtle Dividers: #E2E8F0 (Slate/Dust) -> Used for dividing lines and subtle borders.
+
+
+3. UI COMPONENTS & LAYOUT RULES
+-----------------------------------------------
+Corners & Shapes:
+- Cards and Panels: 16px corner radii (`rounded-2xl`).
+- Buttons and Avatars: Fully rounded pill shapes (`rounded-full`).
+
+Shadows & Depth:
+- Floating Cards: `shadow-[0_4px_20px_rgba(0,0,0,0.05)]`. This gives a very soft, premium elevation.
+- Interactive Buttons: `shadow-[0_4px_14px_rgba(0,0,0,0.15)]` for main CTAs to make them pop.
+
+Hover & Animations:
+- Interactive Elements (Buttons, Story Rings): Should use `hover:scale-105 transition-transform duration-300` for a physical, tactile feel.
+- Navigation/Sidebar Links: Use background highlights (`hover:bg-[#F0F2F5] transition-colors`). Active states use a left border indicator (`border-l-4 border-theme-cobalt`) with a subtle cobalt background tint (`bg-[#2E5BFF]/10`).
+
+Spacing & Padding:
+- Standard Internal Card Padding: 24px (`p-6`).
+- Section Gaps: 24px or 32px (`gap-6`, `gap-8`) between main layout columns or feed posts.
+
+Scrollbars:
+- Horizontal scrolling lists (like stories or tabs) must use the `.no-scrollbar` utility class to remain clean.
+
+
+4. INSTRUCTIONS FOR THE PROFILE PAGE
+-----------------------------------------------
+When developing the Profile Pages (for Athletes, Coaches, and Organizations), you MUST adhere to the exact design language defined above.
+
+A. Layout Structure:
+- The main background of the page must be `#F0F2F5`.
+- Do not make the profile header stretch edge-to-edge if it breaks the boxed layout. Keep the content constrained (e.g., `max-w-7xl mx-auto`).
+- Profile Information (Bio, Stats, Info) should be housed inside white (`#FFFFFF`) cards with `rounded-2xl`, `p-6` padding, and the standard soft shadow (`shadow-[0_4px_20px_rgba(0,0,0,0.05)]`).
+
+B. Typography & Elements:
+- User Names: Bold Charcoal (`#334155`).
+- User Roles: Should clearly display their specific role badge color (e.g., Green for Coaches) as a tag or text highlight.
+- Action Buttons ("Message", "Connect", "Follow"):
+  - Primary actions should use the Electric Cobalt (`#2E5BFF`) or Brand Black (`#000000`) with `rounded-full` shapes and hover scaling.
+  - Disabled actions must use the established low-contrast but legible state: `bg-[#E2E8F0] text-[#475569]`.
+
+C. Navigation Tabs (e.g., Posts, Media, About):
+- Use horizontal lists.
+- Hide the scrollbar if they overflow (`no-scrollbar`).
+- Active tab should be indicated by Charcoal text and perhaps a bottom border of Cobalt (`#2E5BFF`). Inactive tabs should be Slate (`#64748B`).
+
+D. Avatars and Media:
+- Profile Picture: Should have a prominent border. If the user has an active status or story, use the gradient ring (`bg-gradient-to-tr from-[#D4AF37] via-[#9455B7] to-[#2E5BFF]`).
+- Banners/Cover Photos: Should integrate smoothly, potentially with rounded corners if they don't touch the absolute top of the viewport.
+
+By strictly following these tokens and behaviors, the profile pages will perfectly match the feed and login systems, completing the cohesive "Soothed Premium" platform experience.

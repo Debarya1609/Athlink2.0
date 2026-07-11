@@ -1,0 +1,6 @@
+*.tar.gz
+*.zip
+.env
+node_modules/
+
+D:\Athlink-2.0\2026-07-11T13-44-00.011+05-30-openclaw-backup.tar.gz
