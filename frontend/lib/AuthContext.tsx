@@ -1,8 +1,7 @@
 'use client';
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { PublicUser } from '@/types';
-import { mockUser, mockCoach, mockAcademy } from './mockData';
 
 interface AuthContextType {
   currentUser: PublicUser | null;
@@ -15,8 +14,18 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  // Default to Rahul Sharma (Athlete) for Investor Demo
-  const [currentUser, setCurrentUser] = useState<PublicUser | null>(mockUser);
+  const [currentUser, setCurrentUser] = useState<PublicUser | null>(null);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        setCurrentUser(JSON.parse(storedUser));
+      } catch (e) {
+        console.error("Failed to parse stored user", e);
+      }
+    }
+  }, []);
 
   return (
     <AuthContext.Provider value={{ currentUser, setCurrentUser }}>

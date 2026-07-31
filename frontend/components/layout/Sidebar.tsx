@@ -1,7 +1,11 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
+import { useAuth } from '@/lib/AuthContext';
 
 export function Sidebar() {
+  const { currentUser } = useAuth();
   const navItems = [
     { 
       name: 'Home', 
@@ -43,6 +47,16 @@ export function Sidebar() {
         </svg>
       )
     },
+    { 
+      name: 'Profile', 
+      href: '/profile', 
+      active: false,
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 mr-3">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+        </svg>
+      )
+    },
   ];
 
   return (
@@ -67,12 +81,16 @@ export function Sidebar() {
 
         {/* Profile Summary (Top Sidebar) */}
         <div className="flex flex-col items-center px-4 mb-8">
-          <div className="w-20 h-20 rounded-full bg-[#F0F2F5] border border-theme-border mb-3 overflow-hidden shadow-sm">
-            <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80" alt="Alex Jensen" className="w-full h-full object-cover" />
+          <div className="w-20 h-20 rounded-full bg-[#F0F2F5] border border-theme-border mb-3 overflow-hidden shadow-sm flex items-center justify-center text-3xl font-bold text-gray-400">
+            {currentUser?.photo_url ? (
+              <img src={currentUser.photo_url} alt={currentUser.name} className="w-full h-full object-cover" />
+            ) : (
+              currentUser?.name?.charAt(0) || 'U'
+            )}
           </div>
-          <h2 className="text-[17px] font-semibold text-theme-charcoal">Alex Jensen</h2>
-          <p className="text-[14px] text-theme-slate mb-1">Pro Runner</p>
-          <p className="text-[13px] text-theme-slate font-medium">1.2k Connections</p>
+          <h2 className="text-[17px] font-semibold text-theme-charcoal">{currentUser?.name || 'Guest User'}</h2>
+          <p className="text-[14px] text-theme-slate mb-1 capitalize">{currentUser?.role || 'User'}</p>
+          <p className="text-[13px] text-theme-slate font-medium">{currentUser?.followers_count || 0} Connections</p>
         </div>
 
         {/* Navigation */}
@@ -96,13 +114,17 @@ export function Sidebar() {
 
       {/* Bottom: Profile Auth Link */}
       <div className="mt-auto p-4 border-t border-theme-border bg-white">
-        <Link href="/login" className="flex items-center gap-3 w-full p-2 rounded-xl hover:bg-[#F0F2F5] transition-colors">
-          <div className="w-10 h-10 rounded-full bg-[#F0F2F5] flex items-center justify-center text-theme-charcoal font-semibold border border-theme-border shadow-sm">
-            N
+        <Link href="/profile" className="flex items-center gap-3 w-full p-2 rounded-xl hover:bg-[#F0F2F5] transition-colors">
+          <div className="w-10 h-10 rounded-full bg-[#F0F2F5] flex items-center justify-center text-theme-charcoal font-semibold border border-theme-border shadow-sm overflow-hidden">
+            {currentUser?.photo_url ? (
+              <img src={currentUser.photo_url} alt={currentUser.name} className="w-full h-full object-cover" />
+            ) : (
+              currentUser?.name?.charAt(0) || 'U'
+            )}
           </div>
-          <div className="flex flex-col items-start">
-            <span className="text-[14px] font-semibold text-theme-charcoal">Alex Jensen</span>
-            <span className="text-[12px] text-theme-slate">Pro Runner</span>
+          <div className="flex flex-col items-start min-w-0 flex-1">
+            <span className="text-[14px] font-semibold text-theme-charcoal truncate w-full">{currentUser?.name || 'Guest User'}</span>
+            <span className="text-[12px] text-theme-slate capitalize truncate w-full">{currentUser?.role || 'User'}</span>
           </div>
         </Link>
       </div>

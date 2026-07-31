@@ -9,9 +9,11 @@ import { Button } from '@/components/ui/Button'
 import { saveAuth } from '@/lib/auth'
 import api from '@/lib/api'
 import { AuthResponse, UserRole } from '@/types'
+import { useAuth } from '@/lib/AuthContext'
 
 export default function SignupPage() {
   const router = useRouter()
+  const { setCurrentUser } = useAuth()
   const [role, setRole] = useState<UserRole>('athlete')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -76,6 +78,7 @@ export default function SignupPage() {
       }
 
       await api.put('/profiles/me', profilePayload)
+      setCurrentUser(authData.user)
 
       router.push('/feed')
     } catch (err) {

@@ -3,8 +3,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { mockUsers, mockNotifications } from '@/lib/mockData';
+import { useAuth } from '@/lib/AuthContext';
 
 export function Header() {
+  const { currentUser } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -80,12 +82,12 @@ export function Header() {
                     </Link>
                   ))}
                   <Link href={`/discover?q=${searchQuery}`} className="block p-3 text-center text-[13px] font-bold text-theme-cobalt hover:bg-[#F0F2F5] transition-colors">
-                    View all results for "{searchQuery}"
+                    View all results for &quot;{searchQuery}&quot;
                   </Link>
                 </div>
               ) : (
                 <div className="p-4 text-center text-sm text-theme-slate">
-                  No results found for "{searchQuery}"
+                  No results found for &quot;{searchQuery}&quot;
                 </div>
               )}
             </div>
@@ -149,8 +151,12 @@ export function Header() {
           )}
         </div>
 
-        <div className="w-8 h-8 rounded-full bg-[#F0F2F5] border border-theme-border flex items-center justify-center font-bold text-sm text-theme-charcoal ml-2 cursor-pointer">
-          <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80" alt="Avatar" className="w-full h-full rounded-full object-cover" />
+        <div className="w-8 h-8 rounded-full bg-[#F0F2F5] border border-theme-border flex items-center justify-center font-bold text-sm text-theme-charcoal ml-2 cursor-pointer overflow-hidden">
+          {currentUser?.photo_url ? (
+            <img src={currentUser.photo_url} alt={currentUser.name} className="w-full h-full object-cover" />
+          ) : (
+            currentUser?.name?.charAt(0) || 'U'
+          )}
         </div>
       </div>
     </header>
