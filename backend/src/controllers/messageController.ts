@@ -1,6 +1,7 @@
 import { Request, Response } from 'express'
 import pool from '../models/db'
 import { UserRole } from '../types'
+import { emitToUser } from '../sockets/socketManager'
 
 interface SendMessageBody {
   content: string
@@ -282,6 +283,8 @@ export const sendMessage = async (
        VALUES ($1, $2, $3)`,
       [userId, 'message', 'You have a new message']
     )
+
+    emitToUser(userId, 'new_message', result.rows[0])
 
     res.status(201).json({ data: result.rows[0] })
   } catch (err) {

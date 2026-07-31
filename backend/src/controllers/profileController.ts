@@ -2,6 +2,7 @@ import { Request, Response } from 'express'
 import { v2 as cloudinary, UploadApiResponse } from 'cloudinary'
 import pool from '../models/db'
 import { UserRole } from '../types'
+import { emitToUser } from '../sockets/socketManager'
 
 interface UpdateProfileBody {
   photo_url?: string | null
@@ -569,6 +570,7 @@ export const followUser = async (
        VALUES ($1, $2, $3)`,
       [id, 'follow', 'You have a new follower']
     )
+    emitToUser(id, 'new_notification', { type: 'follow', message: 'You have a new follower' })
 
     res.status(201).json({
       data: {

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express'
 import pool from '../models/db'
 import { MediaType, UserRole } from '../types'
+import { emitToUser } from '../sockets/socketManager'
 
 interface CreatePostBody {
   content?: string | null
@@ -281,6 +282,59 @@ export const getFeed = async (
   }
 }
 
+export const getUserPosts = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: 'Unauthorized' })
+      return
+    }
+
+    const userId = getParamString(req.params.id)
+
+    if (!userId || !isValidUuid(userId)) {
+      res.status(400).json({ error: 'Valid user id is required' })
+      return
+    }
+
+    const result = await pool.query<FeedPostRow>(
+      `SELECT
+         p.id,
+         p.user_id,
+         p.content,
+         p.media_url,
+         p.media_type,
+         p.created_at,
+         u.name AS author_name,
+         u.role AS author_role,
+         pr.photo_url AS author_photo_url,
+         COUNT(DISTINCT l.user_id) AS likes_count,
+         COUNT(DISTINCT c.id) AS comments_count,
+         EXISTS (
+           SELECT 1
+           FROM likes my_like
+           WHERE my_like.post_id = p.id AND my_like.user_id = $1
+         ) AS liked_by_me
+       FROM posts p
+       INNER JOIN users u ON u.id = p.user_id
+       LEFT JOIN profiles pr ON pr.user_id = u.id
+       LEFT JOIN likes l ON l.post_id = p.id
+       LEFT JOIN comments c ON c.post_id = p.id
+       WHERE p.user_id = $2
+       GROUP BY p.id, u.name, u.role, pr.photo_url
+       ORDER BY p.created_at DESC
+       LIMIT 50`,
+      [req.user.id, userId]
+    )
+
+    res.status(200).json({ data: result.rows.map(mapFeedPost) })
+  } catch (err) {
+    res.status(500).json({ error: getErrorMessage(err) })
+  }
+}
+
 export const createPost = async (
   req: Request,
   res: Response
@@ -395,6 +449,7 @@ export const likePost = async (
          VALUES ($1, $2, $3)`,
         [post.user_id, 'like', 'Someone liked your post']
       )
+      emitToUser(post.user_id, 'new_notification', { type: 'like', message: 'Someone liked your post' })
     }
 
     res.status(201).json({
@@ -499,6 +554,7 @@ export const commentOnPost = async (
          VALUES ($1, $2, $3)`,
         [post.user_id, 'comment', 'Someone commented on your post']
       )
+      emitToUser(post.user_id, 'new_notification', { type: 'comment', message: 'Someone commented on your post' })
     }
 
     res.status(201).json({ data: result.rows[0] })

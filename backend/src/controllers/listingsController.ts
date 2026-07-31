@@ -1,6 +1,7 @@
 import { Request, Response } from 'express'
 import pool from '../models/db'
 import { ListingType, UserRole } from '../types'
+import { emitToUser } from '../sockets/socketManager'
 
 interface CreateListingBody {
   type: ListingType
@@ -582,6 +583,8 @@ export const applyToListing = async (
         `Someone applied to your ${listing.type}`
       ]
     )
+
+    emitToUser(listing.posted_by, 'new_notification', { type: listing.type, message: `Someone applied to your ${listing.type}` })
 
     res.status(201).json({ data: result.rows[0] })
   } catch (err) {
