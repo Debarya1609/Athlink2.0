@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { mockUsers } from '@/lib/mockData';
 import { UserCard } from '@/components/discover/UserCard';
 import { UserRole } from '@/types';
 
-export default function DiscoverPage() {
+function DiscoverContent() {
   const searchParams = useSearchParams();
   const initialQuery = searchParams.get('q') || '';
 
@@ -17,8 +17,8 @@ export default function DiscoverPage() {
   const [trialsOnly, setTrialsOnly] = useState<boolean>(false);
 
   // Derive filter options from mock data
-  const sports = ['All Sports', ...Array.from(new Set(mockUsers.map(u => u.sport).filter(Boolean)))];
-  const cities = ['All Cities', ...Array.from(new Set(mockUsers.map(u => u.city).filter(Boolean)))];
+  const sports = ['All Sports', ...Array.from(new Set(mockUsers.map(u => u.sport).filter((sport): sport is string => Boolean(sport))))];
+  const cities = ['All Cities', ...Array.from(new Set(mockUsers.map(u => u.city).filter((city): city is string => Boolean(city))))];
 
   const filteredUsers = mockUsers.filter(user => {
     // Text search
@@ -140,7 +140,7 @@ export default function DiscoverPage() {
               </div>
               <h3 className="text-[16px] font-bold text-theme-charcoal mb-1">No matches found</h3>
               <p className="text-[14px] text-theme-slate max-w-sm">
-                We couldn't find any users matching your current filters. Try adjusting your search criteria or clearing some filters.
+                We could not find any users matching your current filters. Try adjusting your search criteria or clearing some filters.
               </p>
               <button 
                 onClick={() => {
@@ -159,5 +159,13 @@ export default function DiscoverPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function DiscoverPage() {
+  return (
+    <Suspense fallback={<div className="flex h-full items-center justify-center bg-[#F8FAFC] text-sm font-semibold text-theme-slate">Loading discover...</div>}>
+      <DiscoverContent />
+    </Suspense>
   );
 }

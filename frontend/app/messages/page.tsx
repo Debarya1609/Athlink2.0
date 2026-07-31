@@ -1,20 +1,143 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { mockConversations, mockMessages, mockUser } from '@/lib/mockData';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import api from '@/lib/api';
+import { useAuth } from '@/lib/AuthContext';
+import { useSocket } from '@/lib/SocketContext';
+
+interface Conversation {
+  user: {
+    id: string;
+    name: string;
+    role: string;
+    photo_url: string | null;
+  };
+  last_message: string;
+  last_message_at: string;
+  unread_count: number;
+}
+
+interface Message {
+  id: string;
+  sender_id: string;
+  receiver_id: string;
+  content: string;
+  read: boolean;
+  created_at: string;
+  sender: {
+    id: string;
+    name: string;
+    role: string;
+    photo_url: string | null;
+  };
+}
 
 export default function MessagesPage() {
-  const [activeConversationId, setActiveConversationId] = useState<string | null>(mockConversations[0]?.id || null);
+  const { currentUser } = useAuth();
+  const { socket } = useSocket();
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  const [activeMessages, setActiveMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const fetchConversations = useCallback(async () => {
+    try {
+      const { data } = await api.get('/messages');
+      setConversations(data.data || []);
+    } catch (err) {
+      console.error('Failed to fetch conversations', err);
+    }
+  }, []);
+
+  const fetchMessages = useCallback(async (userId: string) => {
+    try {
+      const { data } = await api.get(`/messages/${userId}`);
+      setActiveMessages(data.data || []);
+      setConversations(prev => prev.map(c =>
+        c.user.id === userId ? { ...c, unread_count: 0 } : c
+      ));
+    } catch (err) {
+      console.error('Failed to fetch messages', err);
+    }
+  }, []);
 
   // Auto-scroll to bottom of messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [activeConversationId]);
+  }, [activeMessages]);
 
-  const activeMessages = activeConversationId ? mockMessages[activeConversationId] || [] : [];
-  const activeConversation = mockConversations.find(c => c.id === activeConversationId);
+  useEffect(() => {
+    queueMicrotask(() => {
+      void fetchConversations();
+    });
+  }, [fetchConversations]);
+
+  useEffect(() => {
+    if (activeConversationId) {
+      queueMicrotask(() => {
+        void fetchMessages(activeConversationId);
+      });
+    }
+  }, [activeConversationId, fetchMessages]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewMessage = (newMessage: Message) => {
+      // If it belongs to the active conversation, append it
+      if (
+        (newMessage.sender_id === activeConversationId && newMessage.receiver_id === currentUser?.id) ||
+        (newMessage.sender_id === currentUser?.id && newMessage.receiver_id === activeConversationId)
+      ) {
+        setActiveMessages(prev => [...prev, newMessage]);
+      }
+      // Re-fetch conversations to update last message and unread count
+      void fetchConversations();
+    };
+
+    socket.on('new_message', handleNewMessage);
+
+    return () => {
+      socket.off('new_message', handleNewMessage);
+    };
+  }, [socket, activeConversationId, currentUser, fetchConversations]);
+
+  const sendMessage = async () => {
+    if (!inputText.trim() || !activeConversationId) return;
+    
+    const textToSend = inputText.trim();
+    setInputText('');
+
+    try {
+      const { data } = await api.post(`/messages/${activeConversationId}`, {
+        content: textToSend
+      });
+      
+      // The server will also broadcast this back to us via socket, but we can optimistically add it if we want
+      // For now, let's just let the socket handle our own sent messages if we broadcast it, 
+      // Wait, our backend ONLY emits to the receiver! Let's check backend.
+      // In messageController, we only `emitToUser(userId, 'new_message', result.rows[0])` (the receiver).
+      // So the sender must append the message manually here.
+      
+      const sentMessage: Message = {
+        ...data.data,
+        sender: {
+          id: currentUser?.id || '',
+          name: currentUser?.name || '',
+          role: currentUser?.role || 'athlete',
+          photo_url: currentUser?.photo_url || null
+        }
+      };
+      
+      setActiveMessages(prev => [...prev, sentMessage]);
+      void fetchConversations();
+    } catch (err) {
+      console.error('Failed to send message', err);
+    }
+  };
+
+  const activeConversation = conversations.find(c => c.user.id === activeConversationId);
 
   return (
     <div className="flex h-full bg-white">
@@ -37,36 +160,41 @@ export default function MessagesPage() {
           </div>
         </div>
         <div className="flex-1 overflow-y-auto">
-          {mockConversations.map(conv => (
-            <div 
-              key={conv.id} 
-              onClick={() => setActiveConversationId(conv.id)}
-              className={`flex items-start gap-3 p-4 cursor-pointer border-b border-theme-border/50 hover:bg-[#F0F2F5] transition-colors ${activeConversationId === conv.id ? 'bg-[#F0F2F5]' : ''}`}
-            >
-              <div className="w-12 h-12 rounded-full bg-gray-200 flex-shrink-0 flex items-center justify-center font-bold text-gray-500 overflow-hidden shadow-sm">
-                {conv.user.photo_url ? (
-                  <img src={conv.user.photo_url} alt={conv.user.name} className="w-full h-full object-cover" />
-                ) : (
-                  conv.user.name.charAt(0)
+          {conversations.length === 0 ? (
+            <div className="p-6 text-center text-gray-500 text-sm">
+              No conversations yet. Connect with other users to start chatting!
+            </div>
+          ) : (
+            conversations.map(conv => (
+              <div 
+                key={conv.user.id} 
+                onClick={() => setActiveConversationId(conv.user.id)}
+                className={`flex items-start gap-3 p-4 cursor-pointer border-b border-theme-border/50 hover:bg-[#F0F2F5] transition-colors ${activeConversationId === conv.user.id ? 'bg-[#F0F2F5]' : ''}`}
+              >
+                <div className="w-12 h-12 rounded-full bg-gray-200 flex-shrink-0 flex items-center justify-center font-bold text-gray-500 overflow-hidden shadow-sm">
+                  {conv.user.photo_url ? (
+                    <img src={conv.user.photo_url} alt={conv.user.name} className="w-full h-full object-cover" />
+                  ) : (
+                    conv.user.name.charAt(0).toUpperCase()
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-baseline mb-1">
+                      <h4 className="font-bold text-[15px] text-theme-charcoal truncate">{conv.user.name}</h4>
+                      <span className="text-[11px] font-semibold text-theme-slate">
+                        {new Date(conv.last_message_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                      </span>
+                    </div>
+                    <p className={`text-[13px] truncate ${conv.unread_count > 0 ? 'text-theme-charcoal font-semibold' : 'text-theme-slate'}`}>{conv.last_message}</p>
+                </div>
+                {conv.unread_count > 0 && (
+                  <div className="w-5 h-5 rounded-full bg-theme-coral flex items-center justify-center text-[11px] text-white font-bold flex-shrink-0 mt-1">
+                    {conv.unread_count}
+                  </div>
                 )}
               </div>
-              <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-baseline mb-1">
-                    <h4 className="font-bold text-[15px] text-theme-charcoal truncate">{conv.user.name}</h4>
-                    {/* Simplified timestamp mapping */}
-                    <span className="text-[11px] font-semibold text-theme-slate">
-                      {new Date(conv.updated_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                    </span>
-                  </div>
-                  <p className="text-[13px] text-theme-slate truncate">{conv.last_message}</p>
-              </div>
-              {conv.unread_count > 0 && (
-                <div className="w-5 h-5 rounded-full bg-theme-coral flex items-center justify-center text-[11px] text-white font-bold flex-shrink-0 mt-1">
-                  {conv.unread_count}
-                </div>
-              )}
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
 
@@ -81,7 +209,7 @@ export default function MessagesPage() {
                   {activeConversation.user.photo_url ? (
                     <img src={activeConversation.user.photo_url} alt={activeConversation.user.name} className="w-full h-full object-cover" />
                   ) : (
-                    activeConversation.user.name.charAt(0)
+                    activeConversation.user.name.charAt(0).toUpperCase()
                   )}
                 </div>
                 <div>
@@ -89,22 +217,17 @@ export default function MessagesPage() {
                   <span className="text-[12px] font-semibold text-theme-slate capitalize">{activeConversation.user.role}</span>
                 </div>
               </div>
-              <button className="text-theme-slate hover:text-theme-charcoal transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z" />
-                </svg>
-              </button>
             </div>
             
             {/* Chat Messages */}
             <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6 bg-[#F8FAFC]">
               {activeMessages.map((msg) => {
-                const isMe = msg.sender_id === mockUser.id;
+                const isMe = msg.sender_id === currentUser?.id;
                 return (
                   <div key={msg.id} className={`flex max-w-[75%] ${isMe ? 'self-end' : 'self-start'}`}>
                     {!isMe && (
                       <div className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0 flex items-center justify-center font-bold text-gray-500 text-xs overflow-hidden mr-3 mt-auto mb-1">
-                        {activeConversation.user.name.charAt(0)}
+                        {activeConversation.user.name.charAt(0).toUpperCase()}
                       </div>
                     )}
                     <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
@@ -128,11 +251,6 @@ export default function MessagesPage() {
             {/* Chat Input */}
             <div className="p-4 bg-white border-t border-theme-border">
               <div className="flex items-center gap-3 bg-[#F8FAFC] border border-theme-border rounded-full pl-5 pr-2 py-2">
-                <button className="text-theme-slate hover:text-theme-charcoal transition-colors">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.182 15.182a4.5 4.5 0 01-6.364 0M21 12a9 9 0 11-18 0 9 9 0 0118 0zM9.75 9.75c0 .414-.168.75-.375.75S9 10.164 9 9.75 9.168 9 9.375 9s.375.336.375.75zm-.375 0h.008v.015h-.008V9.75zm5.625 0c0 .414-.168.75-.375.75s-.375-.336-.375-.75.168-.75.375-.75.375.336.375.75zm-.375 0h.008v.015h-.008V9.75z" />
-                  </svg>
-                </button>
                 <input 
                   type="text" 
                   value={inputText}
@@ -140,13 +258,13 @@ export default function MessagesPage() {
                   placeholder="Type a message..." 
                   className="flex-1 bg-transparent text-[15px] outline-none text-theme-charcoal placeholder-theme-slate"
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' && inputText.trim()) {
-                      setInputText('');
-                      // Send logic here
+                    if (e.key === 'Enter') {
+                      sendMessage();
                     }
                   }}
                 />
                 <button 
+                  onClick={sendMessage}
                   className="w-10 h-10 rounded-full bg-theme-cobalt flex items-center justify-center text-white font-bold disabled:opacity-50 hover:bg-blue-600 transition-colors shadow-sm"
                   disabled={!inputText.trim()}
                 >

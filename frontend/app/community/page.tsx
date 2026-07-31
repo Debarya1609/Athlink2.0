@@ -87,6 +87,7 @@ export default function CommunityPage() {
             {MOCK_COMMUNITY_POSTS.map((post) => (
               <FeedPost 
                 key={post.id}
+                id={post.id.toString()}
                 name={post.name}
                 avatar={post.avatar}
                 roleBadge={post.roleBadge}

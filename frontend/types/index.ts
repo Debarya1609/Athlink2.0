@@ -117,5 +117,5 @@ export interface Notification {
 
 export interface AuthResponse {
   token: string
-  user: User
+  user: PublicUser
 }

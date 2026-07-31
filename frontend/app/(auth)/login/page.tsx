@@ -9,9 +9,11 @@ import { Button } from '@/components/ui/Button'
 import { saveAuth } from '@/lib/auth'
 import api from '@/lib/api'
 import { AuthResponse } from '@/types'
+import { useAuth } from '@/lib/AuthContext'
 
 export default function LoginPage() {
   const router = useRouter()
+  const { setCurrentUser } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -29,6 +31,7 @@ export default function LoginPage() {
       })
 
       saveAuth(data.token, data.user)
+      setCurrentUser(data.user)
       router.push('/feed')
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {

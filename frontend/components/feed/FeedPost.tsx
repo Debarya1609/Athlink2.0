@@ -1,7 +1,11 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import { CommentSection } from './CommentSection';
+import api from '@/lib/api';
 
 interface FeedPostProps {
+  id: string;
   name: string;
   avatar: string;
   roleBadge?: string;
@@ -10,9 +14,12 @@ interface FeedPostProps {
   image?: string;
   likes: number;
   comments: number;
+  hasLiked?: boolean;
+  onInteraction?: () => void;
 }
 
-export function FeedPost({ name, avatar, roleBadge, timestamp, content, image, likes, comments }: FeedPostProps) {
+export function FeedPost({ id, name, avatar, roleBadge, timestamp, content, image, likes, comments, hasLiked = false, onInteraction }: FeedPostProps) {
+  const [isLiking, setIsLiking] = useState(false);
   // Parsing content to highlight hashtags in blue
   const renderContent = (text: string) => {
     return text.split(' ').map((word, idx) => {
@@ -21,6 +28,21 @@ export function FeedPost({ name, avatar, roleBadge, timestamp, content, image, l
       }
       return word + ' ';
     });
+  };
+
+
+
+  const handleLike = async () => {
+    if (isLiking) return;
+    setIsLiking(true);
+    try {
+      await api.post(`/feed/${id}/like`);
+      if (onInteraction) onInteraction();
+    } catch (err) {
+      console.error('Failed to like post', err);
+    } finally {
+      setIsLiking(false);
+    }
   };
 
   return (
@@ -78,17 +100,21 @@ export function FeedPost({ name, avatar, roleBadge, timestamp, content, image, l
 
       {/* Actions */}
       <div className="flex items-center gap-6 py-2">
-        <button className="flex items-center gap-1.5 text-[14px] font-medium text-theme-slate hover:text-theme-cerulean transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+        <button 
+          onClick={handleLike}
+          disabled={isLiking}
+          className={`flex items-center gap-1.5 text-[14px] font-medium transition-colors ${hasLiked ? 'text-theme-cerulean' : 'text-theme-slate hover:text-theme-cerulean'}`}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill={hasLiked ? "currentColor" : "none"} strokeWidth={2} stroke="currentColor" className="w-5 h-5">
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
           </svg>
-          Like
+          {likes} Like{likes !== 1 ? 's' : ''}
         </button>
         <button className="flex items-center gap-1.5 text-[14px] font-medium text-theme-slate hover:text-theme-cerulean transition-colors">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
             <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
           </svg>
-          Comment
+          {comments} Comment{comments !== 1 ? 's' : ''}
         </button>
         <button className="flex items-center gap-1.5 text-[14px] font-medium text-theme-slate hover:text-theme-cerulean transition-colors">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">

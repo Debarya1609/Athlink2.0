@@ -1,20 +1,9 @@
-import React from 'react';
+'use client';
+
+import React, { useCallback, useEffect, useState } from 'react';
 import { PostCreationBox } from '../../components/feed/PostCreationBox';
 import { FeedPost } from '../../components/feed/FeedPost';
-
-const MOCK_POSTS = [
-  {
-    id: 1,
-    name: 'Sarah Jenkins',
-    avatar: '',
-    roleBadge: 'EXPERT',
-    timestamp: '2h ago',
-    content: 'Just finished my latest training block. Seeing huge improvements in my sprint times! Does anyone have recommendations for recovery nutrition? #00BFFF',
-    image: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-    likes: 24,
-    comments: 5
-  }
-];
+import api from '@/lib/api';
 
 const SUGGESTED_ORGS = [
   { name: 'Nike Running Club', type: 'Pro Runner', logo: 'N' },
@@ -29,7 +18,46 @@ const TRENDING_LISTINGS = [
   { title: 'Pro Soccer Opportuniti...', subtitle: '10k Soccer Prantting' },
 ];
 
+interface FeedItem {
+  id: string;
+  content: string;
+  media_url: string | null;
+  media_type: string | null;
+  created_at: string;
+  author: {
+    id: string;
+    name: string;
+    role: string;
+    photo_url: string | null;
+  };
+  stats: {
+    likes_count: number;
+    comments_count: number;
+    liked_by_me: boolean;
+  };
+}
+
 export default function FeedPage() {
+  const [posts, setPosts] = useState<FeedItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchPosts = useCallback(async () => {
+    try {
+      const { data } = await api.get('/feed');
+      setPosts(data.data || []);
+    } catch (err) {
+      console.error('Failed to fetch feed', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      void fetchPosts();
+    });
+  }, [fetchPosts]);
+
   return (
     <div className="py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-start gap-8">
@@ -38,7 +66,7 @@ export default function FeedPage() {
         <div className="flex-1 max-w-3xl min-w-0">
           
           {/* Post Creation */}
-          <PostCreationBox />
+          <PostCreationBox onPostCreated={fetchPosts} />
 
           {/* Stories Section */}
           <div className="mb-8 bg-white p-6 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.05)] overflow-hidden border border-transparent">
@@ -70,19 +98,28 @@ export default function FeedPage() {
 
           {/* Feed Posts */}
           <div className="space-y-6">
-            {MOCK_POSTS.map((post) => (
-              <FeedPost 
-                key={post.id}
-                name={post.name}
-                avatar={post.avatar}
-                roleBadge={post.roleBadge}
-                timestamp={post.timestamp}
-                content={post.content}
-                image={post.image}
-                likes={post.likes}
-                comments={post.comments}
-              />
-            ))}
+            {loading ? (
+              <div className="text-center py-10 text-gray-500">Loading feed...</div>
+            ) : posts.length === 0 ? (
+              <div className="text-center py-10 text-gray-500">No posts yet. Be the first to share!</div>
+            ) : (
+              posts.map((post) => (
+                <FeedPost 
+                  key={post.id}
+                  id={post.id}
+                  name={post.author?.name || 'Unknown User'}
+                  avatar={post.author?.photo_url || ''}
+                  roleBadge={post.author?.role || 'User'}
+                  timestamp={new Date(post.created_at).toLocaleDateString()}
+                  content={post.content}
+                  image={post.media_url || undefined}
+                  likes={post.stats.likes_count}
+                  comments={post.stats.comments_count}
+                  hasLiked={post.stats.liked_by_me}
+                  onInteraction={fetchPosts}
+                />
+              ))
+            )}
           </div>
         </div>
 

@@ -11,8 +11,8 @@ export default function ListingsPage() {
   const [cityFilter, setCityFilter] = useState<string>('All Cities');
 
   // Derive unique sports and cities from mock data
-  const sports = ['All Sports', ...Array.from(new Set(mockListings.map(l => l.sport).filter(Boolean)))];
-  const cities = ['All Cities', ...Array.from(new Set(mockListings.map(l => l.city).filter(Boolean)))];
+  const sports = ['All Sports', ...Array.from(new Set(mockListings.map(l => l.sport).filter((sport): sport is string => Boolean(sport))))];
+  const cities = ['All Cities', ...Array.from(new Set(mockListings.map(l => l.city).filter((city): city is string => Boolean(city))))];
 
   const filteredListings = mockListings.filter(listing => {
     if (listing.type !== activeTab) return false;
