@@ -6,13 +6,15 @@ import {
   getFeed,
   getPostComments,
   likePost,
-  unlikePost
+  unlikePost,
+  getUserPosts
 } from '../controllers/feedController'
 import { authMiddleware } from '../middleware/authMiddleware'
 
 const router = Router()
 
 router.get('/', authMiddleware, getFeed)
+router.get('/user/:id', authMiddleware, getUserPosts)
 router.post('/', authMiddleware, createPost)
 router.delete('/:id', authMiddleware, deletePost)
 router.post('/:id/like', authMiddleware, likePost)
