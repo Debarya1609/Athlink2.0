@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import api from '@/lib/api';
 import { FeedPost } from '../feed/FeedPost';
 import { useAuth } from '@/lib/AuthContext';
+import { RightSidebar } from '../layout/RightSidebar';
 
 interface ProfileData {
   user: {
@@ -130,8 +131,10 @@ export function ProfileView({ userId }: { userId: string }) {
   }
 
   return (
-    <div className="max-w-5xl mx-auto w-full pb-12 animate-fade-in">
-      {/* Banner & Header Section */}
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-start gap-8 w-full animate-fade-in">
+      {/* Left Column (Main Profile Content) */}
+      <div className="flex-1 min-w-0">
+        {/* Banner & Header Section */}
       <div className="bg-white rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-transparent overflow-hidden mb-6">
         {/* Dynamic Cover Photo (Gradient based on role) */}
         <div className={`h-48 md:h-64 w-full relative ${
@@ -260,10 +263,7 @@ export function ProfileView({ userId }: { userId: string }) {
       </div>
 
       {/* Content Area */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Left Column (Main Content) */}
-        <div className="lg:col-span-2 space-y-6">
+      <div className="space-y-6">
           {activeTab === 'posts' && (
             <>
               {posts.length === 0 ? (
@@ -339,44 +339,43 @@ export function ProfileView({ userId }: { userId: string }) {
             </div>
           )}
         </div>
-
-        {/* Right Column (Side Widgets) */}
-        <div className="hidden lg:flex flex-col gap-6">
-          <div className="bg-white rounded-2xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-transparent">
-            <h3 className="text-[15px] font-bold text-theme-charcoal mb-4">Quick Info</h3>
-            <ul className="space-y-4">
-              <li className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-blue-50 text-theme-cobalt flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 font-medium">Location</p>
-                  <p className="text-sm font-semibold text-gray-800">
-                    {(profileData.profile.city || profileData.profile.state) ? 
-                      `${profileData.profile.city || ''}${profileData.profile.city && profileData.profile.state ? ', ' : ''}${profileData.profile.state || ''}` : 
-                      'Not specified'}
-                  </p>
-                </div>
-              </li>
-              <li className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 font-medium">Joined</p>
-                  <p className="text-sm font-semibold text-gray-800">{new Date(profileData.user.created_at).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</p>
-                </div>
-              </li>
-            </ul>
-          </div>
         </div>
-
-      </div>
+      {/* Right Column (Side Widgets) */}
+      <RightSidebar>
+        <div className="bg-white rounded-2xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-transparent">
+          <h3 className="text-[15px] font-bold text-theme-charcoal mb-4">Quick Info</h3>
+          <ul className="space-y-4">
+            <li className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-blue-50 text-theme-cobalt flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 font-medium">Location</p>
+                <p className="text-sm font-semibold text-gray-800">
+                  {(profileData.profile.city || profileData.profile.state) ? 
+                    `${profileData.profile.city || ''}${profileData.profile.city && profileData.profile.state ? ', ' : ''}${profileData.profile.state || ''}` : 
+                    'Not specified'}
+                </p>
+              </div>
+            </li>
+            <li className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 font-medium">Joined</p>
+                <p className="text-sm font-semibold text-gray-800">{new Date(profileData.user.created_at).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </RightSidebar>
     </div>
   );
 }
+export default ProfileView;
