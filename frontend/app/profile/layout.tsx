@@ -3,7 +3,7 @@ import { Sidebar } from '../../components/layout/Sidebar';
 import { Header } from '../../components/layout/Header';
 import { ChatWidget } from '../../components/layout/ChatWidget';
 
-export default function ProfilesLayout({ children }: { children: React.ReactNode }) {
+export default function ProfileLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-transparent flex">
       {/* Sidebar - Fixed Left */}
@@ -14,7 +14,7 @@ export default function ProfilesLayout({ children }: { children: React.ReactNode
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
         <Header />
-        <main className="flex-1 w-full max-w-full pb-20 sm:pb-12 overflow-x-hidden bg-[#F0F2F5]">
+        <main className="flex-1 w-full max-w-full pb-20 overflow-x-hidden">
           {children}
         </main>
       </div>
