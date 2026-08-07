@@ -2,8 +2,10 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { mockUsers, mockNotifications } from '@/lib/mockData';
+import { mockUsers } from '@/lib/mockData';
 import { useAuth } from '@/lib/AuthContext';
+import api from '@/lib/api';
+import { Notification } from '@/types';
 
 export function Header() {
   const { currentUser } = useAuth();
@@ -13,6 +15,43 @@ export function Header() {
   
   const searchRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
+
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!currentUser) return;
+    
+    api.get<{ notifications: Notification[] }>('/notifications')
+      .then(res => setNotifications(res.data.notifications || []))
+      .catch(console.error);
+
+    const handleGlobalNotification = (e: Event) => {
+      const data = (e as CustomEvent).detail as Notification;
+      setNotifications(prev => [data, ...prev].slice(0, 200));
+      setToastMessage(data.message);
+      setTimeout(() => setToastMessage(null), 3000);
+    };
+
+    window.addEventListener('globalNotification', handleGlobalNotification);
+    return () => window.removeEventListener('globalNotification', handleGlobalNotification);
+  }, [currentUser]);
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      await api.put('/notifications/read-all');
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    } catch (e) { console.error(e); }
+  };
+
+  const handleNotificationClick = async (n: Notification) => {
+    if (!n.read) {
+      try {
+        await api.put(`/notifications/${n.id}/read`);
+        setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, read: true } : x));
+      } catch (e) { console.error(e); }
+    }
+  };
 
   const filteredUsers = mockUsers.filter(user => 
     searchQuery && 
@@ -107,7 +146,7 @@ export function Header() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
             </svg>
             {/* Unread badge */}
-            {mockNotifications.some(n => !n.read) && (
+            {notifications.some(n => !n.read) && (
               <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-theme-coral rounded-full border-2 border-white"></span>
             )}
           </button>
@@ -117,14 +156,15 @@ export function Header() {
             <div className="absolute top-full right-0 mt-3 w-80 bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.15)] border border-theme-border overflow-hidden z-50">
               <div className="p-3 border-b border-theme-border flex justify-between items-center bg-[#F8FAFC]">
                 <h3 className="font-bold text-[15px] text-theme-charcoal">Notifications</h3>
-                <button className="text-[12px] font-semibold text-theme-cobalt hover:underline">Mark all as read</button>
+                <button onClick={handleMarkAllAsRead} className="text-[12px] font-semibold text-theme-cobalt hover:underline">Mark all as read</button>
               </div>
               <div className="max-h-96 overflow-y-auto">
-                {mockNotifications.length > 0 ? (
+                {notifications.length > 0 ? (
                   <div className="flex flex-col">
-                    {mockNotifications.map(notification => (
+                    {notifications.map(notification => (
                       <div 
                         key={notification.id} 
+                        onClick={() => handleNotificationClick(notification)}
                         className={`p-4 border-b border-theme-border/50 hover:bg-[#F8FAFC] transition-colors cursor-pointer ${!notification.read ? 'bg-[#F0F2F5]/50' : ''}`}
                       >
                         <div className="flex gap-3">
@@ -159,6 +199,15 @@ export function Header() {
           )}
         </div>
       </div>
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 bg-theme-charcoal text-white px-4 py-3 rounded-lg shadow-2xl z-50 flex items-center gap-3 animate-in slide-in-from-bottom-5">
+          <div className="w-2 h-2 rounded-full bg-theme-coral animate-pulse"></div>
+          <p className="text-sm font-medium">{toastMessage}</p>
+        </div>
+      )}
     </header>
   );
 }
+

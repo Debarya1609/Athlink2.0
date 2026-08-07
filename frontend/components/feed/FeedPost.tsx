@@ -142,6 +142,8 @@ export function FeedPost({ id, name, avatar, roleBadge, timestamp, content, imag
           Congratulate
         </button>
       </div>
+      
+      <CommentSection postId={id} onCommentAdded={onInteraction} />
 
     </div>
   );

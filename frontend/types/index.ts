@@ -13,6 +13,7 @@ export type NotificationType =
 export interface User {
   id: string
   name: string
+  username: string
   email: string
   role: UserRole
 }
@@ -45,6 +46,7 @@ export interface Profile {
 export interface PublicUser {
   id: string
   name: string
+  username: string
   role: UserRole
   sport: string | null
   city: string | null

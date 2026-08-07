@@ -3,6 +3,7 @@ import { Post, Listing, Conversation, Notification, PublicUser, Profile } from '
 export const mockUser: PublicUser = {
   id: '1',
   name: 'Rahul Sharma',
+  username: 'rahulsharma',
   role: 'athlete',
   sport: 'Cricket',
   city: 'Nagpur',
@@ -37,6 +38,7 @@ export const mockAthleteProfile: Profile = {
 export const mockAcademy: PublicUser = {
   id: '2',
   name: 'Mumbai Cricket Academy',
+  username: 'mumbaicricket',
   role: 'academy',
   sport: 'Cricket',
   city: 'Mumbai',
@@ -48,6 +50,7 @@ export const mockAcademy: PublicUser = {
 export const mockCoach: PublicUser = {
   id: '3',
   name: 'Vikram Singh',
+  username: 'vikramsingh',
   role: 'coach',
   sport: 'Cricket',
   city: 'Delhi',
@@ -158,6 +161,7 @@ export const mockListings: Listing[] = [
     posted_by: {
       id: '3',
       name: 'Pune FC Academy',
+      username: 'punefc',
       role: 'academy',
       sport: 'Football',
       city: 'Pune',
@@ -183,6 +187,7 @@ export const mockListings: Listing[] = [
     posted_by: {
       id: '4',
       name: 'Delhi Football Association',
+      username: 'delhifa',
       role: 'academy',
       sport: 'Football',
       city: 'Delhi',
@@ -281,6 +286,7 @@ export const mockUsers: PublicUser[] = [
   {
     id: '4',
     name: 'Delhi Football Association',
+    username: 'delhifa',
     role: 'academy',
     sport: 'Football',
     city: 'Delhi',
@@ -291,6 +297,7 @@ export const mockUsers: PublicUser[] = [
   {
     id: '5',
     name: 'Pune FC Academy',
+    username: 'punefc',
     role: 'academy',
     sport: 'Football',
     city: 'Pune',

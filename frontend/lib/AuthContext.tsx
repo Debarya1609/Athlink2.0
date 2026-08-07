@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { PublicUser } from '@/types';
+import api from '@/lib/api';
 
 interface AuthContextType {
   currentUser: PublicUser | null;
@@ -17,14 +18,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<PublicUser | null>(null);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        setCurrentUser(JSON.parse(storedUser));
-      } catch (e) {
-        console.error("Failed to parse stored user", e);
+    const initAuth = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const res = await api.get('/auth/me');
+          setCurrentUser(res.data.user);
+        } catch (e) {
+          console.error("Failed to fetch current user", e);
+          localStorage.removeItem('token');
+          setCurrentUser(null);
+        }
       }
-    }
+    };
+    initAuth();
   }, []);
 
   return (

@@ -7,6 +7,7 @@ import { UserRole } from '../types'
 
 interface RegisterBody {
   name: string
+  username: string
   email: string
   password: string
   role: UserRole
@@ -20,6 +21,7 @@ interface LoginBody {
 interface AuthUserRow {
   id: string
   name: string
+  username: string
   email: string
   role: UserRole
 }
@@ -82,11 +84,12 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     }
 
     const name = getString(req.body, 'name')
+    const username = getString(req.body, 'username')?.toLowerCase() ?? null
     const email = getString(req.body, 'email')?.toLowerCase() ?? null
     const password = getString(req.body, 'password')
     const roleValue = getString(req.body, 'role')
 
-    if (!name || !email || !password || !roleValue) {
+    if (!name || !username || !email || !password || !roleValue) {
       res.status(400).json({ error: 'All fields are required' })
       return
     }
@@ -115,17 +118,24 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
     const body: RegisterBody = {
       name,
+      username,
       email,
       password,
       role: roleValue
     }
 
-    const existing = await pool.query<{ id: string }>(
-      'SELECT id FROM users WHERE email = $1',
-      [body.email]
+    // Check if email or username already exists
+    const existing = await pool.query<{ id: string, email: string, username: string }>(
+      'SELECT id, email, username FROM users WHERE email = $1 OR username = $2',
+      [body.email, body.username]
     )
 
     if (existing.rows.length > 0) {
+      const match = existing.rows[0]
+      if (match.username === body.username) {
+        res.status(409).json({ error: 'Username already taken' })
+        return
+      }
       res.status(409).json({ error: 'Email already exists' })
       return
     }
@@ -136,10 +146,10 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     await client.query('BEGIN')
 
     const result = await client.query<AuthUserRow>(
-      `INSERT INTO users (name, email, password_hash, role)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id, name, email, role`,
-      [body.name, body.email, passwordHash, body.role]
+      `INSERT INTO users (name, username, email, password_hash, role)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id, name, username, email, role`,
+      [body.name, body.username, body.email, passwordHash, body.role]
     )
 
     const user = result.rows[0]
@@ -183,16 +193,11 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return
     }
 
-    const email = getString(req.body, 'email')?.toLowerCase() ?? null
+    const identifier = getString(req.body, 'email')?.toLowerCase() ?? null
     const password = getString(req.body, 'password')
 
-    if (!email || !password) {
-      res.status(400).json({ error: 'Email and password are required' })
-      return
-    }
-
-    if (!isEmailValid(email)) {
-      res.status(400).json({ error: 'Valid email is required' })
+    if (!identifier || !password) {
+      res.status(400).json({ error: 'Username/Email and password are required' })
       return
     }
 
@@ -204,12 +209,12 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     }
 
     const body: LoginBody = {
-      email,
+      email: identifier,
       password
     }
 
     const result = await pool.query<LoginUserRow>(
-      'SELECT id, name, email, password_hash, role FROM users WHERE email = $1',
+      'SELECT id, name, username, email, password_hash, role FROM users WHERE email = $1 OR username = $1',
       [body.email]
     )
 
@@ -243,10 +248,34 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       user: {
         id: user.id,
         name: user.name,
+        username: user.username,
         email: user.email,
         role: user.role
       }
     })
+  } catch (err) {
+    res.status(500).json({ error: getErrorMessage(err) })
+  }
+}
+export const getMe = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = (req as any).user?.id
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' })
+      return
+    }
+
+    const result = await pool.query<AuthUserRow>(
+      'SELECT id, name, username, email, role FROM users WHERE id = $1',
+      [userId]
+    )
+
+    if (result.rows.length === 0) {
+      res.status(404).json({ error: 'User not found' })
+      return
+    }
+
+    res.status(200).json({ user: result.rows[0] })
   } catch (err) {
     res.status(500).json({ error: getErrorMessage(err) })
   }

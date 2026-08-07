@@ -20,6 +20,7 @@ export default function SignupPage() {
 
   // Common fields
   const [name, setName] = useState('')
+  const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [city, setCity] = useState('')
@@ -47,6 +48,7 @@ export default function SignupPage() {
       // Step 1: Register the user
       const { data: authData } = await api.post<AuthResponse>('/auth/register', {
         name,
+        username,
         email,
         password,
         role
@@ -138,7 +140,12 @@ export default function SignupPage() {
           <div className="sm:col-span-2">
             <Input label={role === 'academy' ? 'Academy Name' : 'Full Name'} required value={name} onChange={(e) => setName(e.target.value)} />
           </div>
-          <Input label="Email address" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          <div className="sm:col-span-2">
+            <Input label="Username" required value={username} onChange={(e) => setUsername(e.target.value)} />
+          </div>
+          <div className="sm:col-span-2">
+            <Input label="Email address" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          </div>
           <Input label="Password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
           <Input label="City" required value={city} onChange={(e) => setCity(e.target.value)} />
           <Input label="Primary Sport" required value={sport} onChange={(e) => setSport(e.target.value)} placeholder="e.g. Cricket, Football" />
