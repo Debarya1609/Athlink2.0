@@ -9,7 +9,7 @@ export default function CommunityLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-screen bg-[var(--color-paper)] md:bg-[var(--color-white)] flex justify-center">
       {/* Sidebar - Fixed Left (Desktop/Tablet) */}
-      <div className="hidden md:flex w-[80px] lg:w-[260px] shrink-0 border-r border-[var(--color-gray-15)] bg-[var(--color-white)] h-screen sticky top-0">
+      <div className="hidden md:flex w-fit transition-all duration-300 ease-in-out shrink-0 border-r border-[var(--color-gray-15)] bg-[var(--color-white)] h-screen sticky top-0">
         <Sidebar />
       </div>
       
