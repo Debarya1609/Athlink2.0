@@ -4,7 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import api from '@/lib/api';
 import { FeedPost } from '../feed/FeedPost';
 import { useAuth } from '@/lib/AuthContext';
-import { RightSidebar } from '../layout/RightSidebar';
+import { useRouter } from 'next/navigation';
 
 interface ProfileData {
   user: {
@@ -40,31 +40,13 @@ interface ProfileData {
   };
 }
 
-interface FeedItem {
-  id: string;
-  content: string;
-  media_url: string | null;
-  media_type: string | null;
-  created_at: string;
-  author: {
-    id: string;
-    name: string;
-    role: string;
-    photo_url: string | null;
-  };
-  stats: {
-    likes_count: number;
-    comments_count: number;
-    liked_by_me: boolean;
-  };
-}
-
 export function ProfileView({ userId }: { userId: string }) {
   const { currentUser } = useAuth();
+  const router = useRouter();
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
-  const [posts, setPosts] = useState<FeedItem[]>([]);
+  const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'posts' | 'media' | 'about'>('posts');
+  const [activeTab, setActiveTab] = useState<'posts' | 'results' | 'about'>('posts');
   const [isFollowing, setIsFollowing] = useState(false); 
 
   const isOwnProfile = currentUser?.id === userId;
@@ -113,269 +95,239 @@ export function ProfileView({ userId }: { userId: string }) {
     }
   };
 
+  const getRoleBadgeStyle = (role: string) => {
+    const r = role.toLowerCase();
+    if (r === 'academy' || r === 'organization') {
+      return "bg-[image:var(--image-gold-shine)] text-[var(--color-ink)] border-none";
+    }
+    if (r === 'coach') {
+      return "bg-transparent text-[var(--color-ink)] border border-[var(--color-ink)]";
+    }
+    return "bg-[var(--color-ink)] text-[var(--color-white)] border-none";
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-[50vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-theme-cobalt"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-ink)]"></div>
       </div>
     );
   }
 
   if (!profileData) {
     return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <h2 className="text-2xl font-bold text-gray-500">Profile not found</h2>
-        <p className="text-gray-400 mt-2">The user you are looking for does not exist.</p>
+      <div className="flex flex-col items-center justify-center py-20 text-[var(--color-ink)]">
+        <h2 className="font-display text-2xl font-bold">Profile not found</h2>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-start gap-8 w-full animate-fade-in">
-      {/* Left Column (Main Profile Content) */}
-      <div className="flex-1 min-w-0">
-        {/* Banner & Header Section */}
-      <div className="bg-white rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-transparent overflow-hidden mb-6">
-        {/* Dynamic Cover Photo (Gradient based on role) */}
-        <div className={`h-48 md:h-64 w-full relative ${
-          profileData.user.role === 'athlete' ? 'bg-gradient-to-r from-theme-cobalt via-blue-500 to-cyan-400' :
-          profileData.user.role === 'scout' ? 'bg-gradient-to-r from-purple-600 via-purple-500 to-indigo-500' :
-          'bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-400'
-        }`}>
-          <div className="absolute inset-0 bg-black/10"></div>
-        </div>
-        
-        <div className="px-6 md:px-10 pb-8">
-          <div className="flex flex-col md:flex-row md:items-end justify-between -mt-16 md:-mt-24 mb-6 gap-4">
-            <div className="flex flex-col md:flex-row items-center md:items-end gap-6 z-10">
-              {/* Avatar */}
-              <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white bg-gray-100 shadow-md overflow-hidden flex-shrink-0">
-                {profileData.profile.photo_url ? (
-                  <img src={profileData.profile.photo_url} alt={profileData.user.name} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center text-gray-500 text-5xl font-bold">
-                    {profileData.user.name.charAt(0).toUpperCase()}
-                  </div>
+    <div className="w-full bg-[var(--color-white)] min-h-screen">
+      {/* Top Header */}
+      <div className="flex items-center px-4 py-3 border-b border-[var(--color-gray-15)]">
+        <button onClick={() => router.back()} className="mr-4 text-[var(--color-ink)]">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+          </svg>
+        </button>
+        <h1 className="font-display font-bold text-xl text-[var(--color-ink)] tracking-wide">Profile</h1>
+      </div>
+
+      {/* Main Profile Info */}
+      <div className="px-4 py-6 md:px-6">
+        <div className="flex flex-col md:flex-row gap-6 md:items-start justify-between">
+          
+          {/* Avatar and Basic Info */}
+          <div className="flex gap-4 items-start">
+            <div className="w-20 h-20 md:w-24 md:h-24 rounded-full border border-[var(--color-gray-15)] bg-[var(--color-paper)] overflow-hidden flex-shrink-0 flex items-center justify-center font-display text-3xl text-[var(--color-gray-40)]">
+              {profileData.profile.photo_url ? (
+                <img src={profileData.profile.photo_url} alt={profileData.user.name} className="w-full h-full object-cover" />
+              ) : (
+                profileData.user.name.charAt(0).toUpperCase()
+              )}
+            </div>
+            
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="font-display font-extrabold text-2xl md:text-3xl text-[var(--color-ink)] uppercase tracking-wide">
+                  {profileData.user.name}
+                </h1>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest ${getRoleBadgeStyle(profileData.user.role)}`}>
+                  {profileData.user.role}
+                </span>
+              </div>
+              <div className="font-mono text-[13px] text-[var(--color-gray-60)] mt-1">
+                @{profileData.user.email.split('@')[0]} 
+                {(profileData.profile.city || profileData.profile.state) && (
+                  <span className="ml-2">· {profileData.profile.city}{profileData.profile.state ? `, ${profileData.profile.state}` : ''}</span>
                 )}
               </div>
-              
-              <div className="text-center md:text-left pb-2">
-                <h1 className="text-3xl font-extrabold text-theme-charcoal">{profileData.user.name}</h1>
-                <div className="flex items-center justify-center md:justify-start gap-3 mt-2">
-                  <span className="px-3 py-1 bg-blue-50 text-theme-cobalt text-xs font-bold uppercase tracking-wider rounded-full border border-blue-100">
-                    {profileData.user.role}
-                  </span>
-                  {(profileData.profile.city || profileData.profile.state) && (
-                    <span className="text-sm text-gray-500 font-medium flex items-center gap-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-                      </svg>
-                      {profileData.profile.city}{profileData.profile.city && profileData.profile.state ? ', ' : ''}{profileData.profile.state}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
 
-            <div className="flex items-center justify-center md:justify-end gap-3 pb-2 z-10">
-              {isOwnProfile ? (
-                <button 
-                  onClick={() => alert("Edit Profile Modal Coming Soon")}
-                  className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-theme-charcoal text-sm font-semibold rounded-full transition-colors"
-                >
-                  Edit Profile
-                </button>
-              ) : (
-                <>
-                  <button 
-                    onClick={handleFollowToggle}
-                    className={`px-8 py-2.5 text-sm font-bold rounded-full transition-all duration-300 ${
-                      isFollowing 
-                        ? 'bg-gray-100 text-theme-charcoal border border-gray-200 hover:bg-gray-200' 
-                        : 'bg-theme-cobalt text-white shadow-md hover:bg-blue-700 hover:shadow-lg'
-                    }`}
-                  >
-                    {isFollowing ? 'Following' : 'Follow'}
-                  </button>
-                  <button className="p-2.5 bg-gray-100 hover:bg-gray-200 text-theme-charcoal rounded-full transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-                    </svg>
-                  </button>
-                </>
-              )}
+              {/* Follow Stats */}
+              <div className="flex gap-4 mt-3">
+                <div className="text-[13px] text-[var(--color-gray-60)]"><span className="font-mono text-[var(--color-ink)] font-bold">{profileData.stats.followers_count}</span> followers</div>
+                <div className="text-[13px] text-[var(--color-gray-60)]"><span className="font-mono text-[var(--color-ink)] font-bold">{profileData.stats.following_count}</span> following</div>
+              </div>
             </div>
           </div>
 
-          {/* Stats & Bio */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 border-t border-gray-100 pt-6">
-            <div className="md:col-span-2">
-              <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">About</h3>
-              <p className="text-gray-700 text-[15px] leading-relaxed">
-                {profileData.profile.bio || "No bio provided yet."}
-              </p>
-            </div>
-            <div className="flex gap-8 justify-start md:justify-end">
-              <div className="flex flex-col items-center md:items-start">
-                <span className="text-2xl font-bold text-theme-charcoal">{profileData.stats.followers_count}</span>
-                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Followers</span>
+          {/* Action Button */}
+          <div className="flex-shrink-0 mt-2 md:mt-0">
+            {isOwnProfile ? (
+              <button 
+                onClick={() => alert("Edit Profile Coming Soon")}
+                className="w-full md:w-auto px-6 py-2 border border-[var(--color-gray-15)] text-[var(--color-ink)] text-sm font-semibold hover:bg-[var(--color-paper)] transition-colors"
+              >
+                Edit Profile
+              </button>
+            ) : (
+              <button 
+                onClick={handleFollowToggle}
+                className={`w-full md:w-auto px-8 py-2 text-sm font-bold transition-all duration-200 ${
+                  isFollowing 
+                    ? 'bg-transparent text-[var(--color-ink)] border border-[var(--color-gray-15)] hover:bg-[var(--color-paper)]' 
+                    : 'bg-[var(--color-ink)] text-[var(--color-white)]'
+                }`}
+              >
+                {isFollowing ? 'Following' : 'Follow'}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Bio & Highlights Grid */}
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Bio */}
+          <div>
+            <h3 className="text-[11px] font-bold text-[var(--color-gray-40)] uppercase tracking-widest mb-2">Bio</h3>
+            <p className="text-[14px] text-[var(--color-ink)] leading-relaxed">
+              {profileData.profile.bio || "No bio provided yet."}
+            </p>
+          </div>
+          
+          {/* Highlights */}
+          <div className="flex flex-col gap-2 border-l border-[var(--color-gray-15)] pl-6">
+            <h3 className="text-[11px] font-bold text-[var(--color-gray-40)] uppercase tracking-widest mb-1">Highlights</h3>
+            
+            {profileData.profile.sport && (
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-[var(--color-ink)]"></div>
+                <span className="text-[13px] text-[var(--color-gray-60)] font-mono uppercase">Sport:</span>
+                <span className="text-[13px] text-[var(--color-ink)] font-medium">{profileData.profile.sport}</span>
               </div>
-              <div className="flex flex-col items-center md:items-start">
-                <span className="text-2xl font-bold text-theme-charcoal">{profileData.stats.following_count}</span>
-                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Following</span>
+            )}
+            
+            {profileData.profile.position && (
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-[var(--color-ink)]"></div>
+                <span className="text-[13px] text-[var(--color-gray-60)] font-mono uppercase">Role/Pos:</span>
+                <span className="text-[13px] text-[var(--color-ink)] font-medium">{profileData.profile.position}</span>
               </div>
-              <div className="flex flex-col items-center md:items-start">
-                <span className="text-2xl font-bold text-theme-charcoal">{posts.length}</span>
-                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Posts</span>
+            )}
+
+            {profileData.profile.experience_years && (
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-[image:var(--image-gold-shine)]"></div>
+                <span className="text-[13px] text-[var(--color-gray-60)] font-mono uppercase">Experience:</span>
+                <span className="text-[13px] text-[var(--color-ink)] font-medium">{profileData.profile.experience_years} Years</span>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-1 mb-6 border-b border-gray-200">
+      <div className="flex border-b border-[var(--color-gray-15)]">
         <button 
           onClick={() => setActiveTab('posts')}
-          className={`px-6 py-4 text-sm font-semibold transition-colors border-b-2 ${
-            activeTab === 'posts' ? 'border-theme-cobalt text-theme-cobalt' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+          className={`flex-1 py-3 text-[13px] font-bold uppercase tracking-widest transition-colors relative ${
+            activeTab === 'posts' ? 'text-[var(--color-ink)]' : 'text-[var(--color-gray-40)] hover:text-[var(--color-gray-60)]'
           }`}
         >
           Posts
+          {activeTab === 'posts' && <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[image:var(--image-gold-shine)]" />}
         </button>
         <button 
-          onClick={() => setActiveTab('media')}
-          className={`px-6 py-4 text-sm font-semibold transition-colors border-b-2 ${
-            activeTab === 'media' ? 'border-theme-cobalt text-theme-cobalt' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+          onClick={() => setActiveTab('results')}
+          className={`flex-1 py-3 text-[13px] font-bold uppercase tracking-widest transition-colors relative ${
+            activeTab === 'results' ? 'text-[var(--color-ink)]' : 'text-[var(--color-gray-40)] hover:text-[var(--color-gray-60)]'
           }`}
         >
-          Media
+          Results
+          {activeTab === 'results' && <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[image:var(--image-gold-shine)]" />}
         </button>
         <button 
           onClick={() => setActiveTab('about')}
-          className={`px-6 py-4 text-sm font-semibold transition-colors border-b-2 ${
-            activeTab === 'about' ? 'border-theme-cobalt text-theme-cobalt' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+          className={`flex-1 py-3 text-[13px] font-bold uppercase tracking-widest transition-colors relative ${
+            activeTab === 'about' ? 'text-[var(--color-ink)]' : 'text-[var(--color-gray-40)] hover:text-[var(--color-gray-60)]'
           }`}
         >
-          Details
+          About
+          {activeTab === 'about' && <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[image:var(--image-gold-shine)]" />}
         </button>
       </div>
 
-      {/* Content Area */}
-      <div className="space-y-6">
-          {activeTab === 'posts' && (
-            <>
-              {posts.length === 0 ? (
-                <div className="bg-white rounded-2xl p-10 text-center shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-transparent">
-                  <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 text-gray-400">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-800">No Posts Yet</h3>
-                  <p className="text-gray-500 mt-1">{isOwnProfile ? "You haven't posted anything." : "This user hasn't posted anything."}</p>
-                </div>
-              ) : (
-                posts.map(post => (
-                  <FeedPost 
-                    key={post.id}
-                    id={post.id}
-                    name={post.author?.name || 'Unknown'}
-                    avatar={post.author?.photo_url || ''}
-                    roleBadge={post.author?.role || 'User'}
-                    timestamp={new Date(post.created_at).toLocaleDateString()}
-                    content={post.content}
-                    image={post.media_url || undefined}
-                    likes={post.stats.likes_count}
-                    comments={post.stats.comments_count}
-                    hasLiked={post.stats.liked_by_me}
-                    onInteraction={fetchProfile}
-                  />
-                ))
-              )}
-            </>
-          )}
+      <div className="lane-line"></div>
 
-          {activeTab === 'media' && (
-            <div className="bg-white rounded-2xl p-10 text-center shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-transparent">
-              <p className="text-gray-500">Media gallery coming soon.</p>
-            </div>
-          )}
+      {/* Tab Content */}
+      <div className="w-full flex flex-col">
+        {activeTab === 'posts' && (
+          <>
+            {posts.length === 0 ? (
+              <div className="text-center py-12 text-[var(--color-gray-40)]">
+                <span className="font-mono text-sm">No posts yet.</span>
+              </div>
+            ) : (
+              posts.map(post => (
+                <FeedPost 
+                  key={post.id}
+                  id={post.id}
+                  name={post.author?.name || 'Unknown'}
+                  avatar={post.author?.photo_url || ''}
+                  roleBadge={post.author?.role || 'User'}
+                  timestamp={new Date(post.created_at).toLocaleDateString()}
+                  content={post.content}
+                  image={post.media_url || undefined}
+                  likes={post.stats.likes_count}
+                  comments={post.stats.comments_count}
+                  hasLiked={post.stats.liked_by_me}
+                  postType="general" 
+                  onInteraction={fetchProfile}
+                />
+              ))
+            )}
+          </>
+        )}
 
-          {activeTab === 'about' && (
-            <div className="bg-white rounded-2xl p-8 shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-transparent space-y-6">
-              <h3 className="text-lg font-bold text-theme-charcoal mb-4">Complete Details</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-1">Sport</label>
-                  <p className="text-[15px] font-medium text-gray-800">{profileData.profile.sport || 'Not specified'}</p>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-1">Position / Speciality</label>
-                  <p className="text-[15px] font-medium text-gray-800">{profileData.profile.position || 'Not specified'}</p>
-                </div>
-                {profileData.user.role === 'athlete' && (
-                  <>
-                    <div>
-                      <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-1">Age</label>
-                      <p className="text-[15px] font-medium text-gray-800">{profileData.profile.age ? `${profileData.profile.age} years old` : 'Not specified'}</p>
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-1">Physical</label>
-                      <p className="text-[15px] font-medium text-gray-800">
-                        {profileData.profile.height ? `${profileData.profile.height} / ` : ''}
-                        {profileData.profile.weight ? profileData.profile.weight : ''}
-                        {!profileData.profile.height && !profileData.profile.weight && 'Not specified'}
-                      </p>
-                    </div>
-                  </>
-                )}
-                <div>
-                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-1">Experience</label>
-                  <p className="text-[15px] font-medium text-gray-800">{profileData.profile.experience_years !== null ? `${profileData.profile.experience_years} years` : 'Not specified'}</p>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-        </div>
-      {/* Right Column (Side Widgets) */}
-      <RightSidebar>
-        <div className="bg-white rounded-2xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-transparent">
-          <h3 className="text-[15px] font-bold text-theme-charcoal mb-4">Quick Info</h3>
-          <ul className="space-y-4">
-            <li className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-blue-50 text-theme-cobalt flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-                </svg>
-              </div>
+        {activeTab === 'results' && (
+          <div className="text-center py-12 text-[var(--color-gray-40)]">
+            <span className="font-mono text-sm">No structured results posted.</span>
+          </div>
+        )}
+
+        {activeTab === 'about' && (
+          <div className="p-6">
+            <div className="space-y-6 max-w-lg">
               <div>
-                <p className="text-xs text-gray-500 font-medium">Location</p>
-                <p className="text-sm font-semibold text-gray-800">
-                  {(profileData.profile.city || profileData.profile.state) ? 
-                    `${profileData.profile.city || ''}${profileData.profile.city && profileData.profile.state ? ', ' : ''}${profileData.profile.state || ''}` : 
-                    'Not specified'}
+                <h4 className="text-[11px] font-bold text-[var(--color-gray-40)] uppercase tracking-widest mb-1">Physical Attributes</h4>
+                <p className="text-[14px] text-[var(--color-ink)]">
+                  {profileData.profile.height ? `${profileData.profile.height} / ` : ''}
+                  {profileData.profile.weight ? profileData.profile.weight : ''}
+                  {!profileData.profile.height && !profileData.profile.weight && 'Not specified'}
                 </p>
               </div>
-            </li>
-            <li className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
-                </svg>
-              </div>
+              
               <div>
-                <p className="text-xs text-gray-500 font-medium">Joined</p>
-                <p className="text-sm font-semibold text-gray-800">{new Date(profileData.user.created_at).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</p>
+                <h4 className="text-[11px] font-bold text-[var(--color-gray-40)] uppercase tracking-widest mb-1">Account Joined</h4>
+                <p className="text-[14px] text-[var(--color-ink)]">
+                  {new Date(profileData.user.created_at).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
+                </p>
               </div>
-            </li>
-          </ul>
-        </div>
-      </RightSidebar>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
-export default ProfileView;
