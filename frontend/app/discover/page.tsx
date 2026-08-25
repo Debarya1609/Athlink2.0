@@ -1,162 +1,98 @@
 'use client';
 
-import React, { Suspense, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import React, { Suspense } from 'react';
 import { mockUsers } from '@/lib/mockData';
-import { UserCard } from '@/components/discover/UserCard';
-import { UserRole } from '@/types';
+import Link from 'next/link';
 
-function DiscoverContent() {
-  const searchParams = useSearchParams();
-  const initialQuery = searchParams.get('q') || '';
-
-  const [searchQuery, setSearchQuery] = useState(initialQuery);
-  const [roleFilter, setRoleFilter] = useState<UserRole | 'all'>('all');
-  const [sportFilter, setSportFilter] = useState<string>('All Sports');
-  const [cityFilter, setCityFilter] = useState<string>('All Cities');
-  const [trialsOnly, setTrialsOnly] = useState<boolean>(false);
-
-  // Derive filter options from mock data
-  const sports = ['All Sports', ...Array.from(new Set(mockUsers.map(u => u.sport).filter((sport): sport is string => Boolean(sport))))];
-  const cities = ['All Cities', ...Array.from(new Set(mockUsers.map(u => u.city).filter((city): city is string => Boolean(city))))];
-
-  const filteredUsers = mockUsers.filter(user => {
-    // Text search
-    if (searchQuery && !(
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.sport?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.city?.toLowerCase().includes(searchQuery.toLowerCase())
-    )) {
-      return false;
-    }
-    
-    // Filters
-    if (roleFilter !== 'all' && user.role !== roleFilter) return false;
-    if (sportFilter !== 'All Sports' && user.sport !== sportFilter) return false;
-    if (cityFilter !== 'All Cities' && user.city !== cityFilter) return false;
-    if (trialsOnly && !user.available_for_trials) return false;
-
-    return true;
-  });
+function CuratedRow({ title, users }: { title: string, users: typeof mockUsers }) {
+  if (users.length === 0) return null;
 
   return (
-    <div className="flex flex-col h-full bg-[#F8FAFC]">
-      {/* Header and Filters Area */}
-      <div className="bg-white border-b border-theme-border flex flex-col sticky top-0 z-10 shadow-sm">
-        
-        {/* Top Header */}
-        <div className="px-6 py-5 border-b border-theme-border/50">
-          <h1 className="text-2xl font-bold text-theme-charcoal">Discover</h1>
-          <p className="text-theme-slate text-sm mt-1">Find athletes, coaches, and academies near you.</p>
-        </div>
+    <div className="mb-10">
+      <div className="flex items-center justify-between mb-4 px-4 md:px-6">
+        <h2 className="font-display text-xl font-bold text-[var(--color-ink)] uppercase tracking-wide">{title}</h2>
+        <button className="text-[12px] font-bold text-[var(--color-gray-60)] uppercase tracking-widest hover:text-[var(--color-ink)] transition-colors">See All</button>
+      </div>
+      
+      <div className="flex overflow-x-auto gap-4 px-4 md:px-6 pb-4 no-scrollbar snap-x">
+        {users.map(user => (
+          <div key={user.id} className="snap-start shrink-0 w-[240px] border border-[var(--color-gray-15)] bg-[var(--color-white)] p-5 flex flex-col items-center text-center relative group hover:border-[var(--color-ink)] transition-colors">
+            
+            {/* Availability Dot */}
+            {user.available_for_trials && (
+              <div className="absolute top-4 right-4 flex items-center justify-center">
+                <div className="w-2 h-2 rounded-full bg-[image:var(--image-gold-shine)]"></div>
+              </div>
+            )}
 
-        {/* Filters Toolbar */}
-        <div className="px-6 py-4 flex flex-col gap-4">
-          <div className="relative w-full max-w-2xl">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-theme-slate">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-            </svg>
-            <input 
-              type="text" 
-              placeholder="Search by name, sport, or city..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-[#F0F2F5] text-theme-charcoal placeholder-theme-slate rounded-lg pl-10 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-theme-cobalt text-sm font-medium transition-all"
-            />
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Role Filter */}
-            <div className="flex bg-[#F0F2F5] rounded-lg p-1">
-              {(['all', 'athlete', 'coach', 'academy'] as const).map(role => (
-                <button
-                  key={role}
-                  onClick={() => setRoleFilter(role)}
-                  className={`px-4 py-1.5 rounded-md text-[13px] font-bold capitalize transition-colors ${
-                    roleFilter === role 
-                      ? 'bg-white text-theme-charcoal shadow-sm' 
-                      : 'text-theme-slate hover:text-theme-charcoal'
-                  }`}
-                >
-                  {role}
-                </button>
-              ))}
+            {/* Avatar */}
+            <div className="w-20 h-20 rounded-full border border-[var(--color-gray-15)] bg-[var(--color-paper)] overflow-hidden flex items-center justify-center mb-3">
+              {user.photo_url ? (
+                <img src={user.photo_url} alt={user.name} className="w-full h-full object-cover" />
+              ) : (
+                <span className="font-display font-bold text-[var(--color-gray-40)] text-2xl">{user.name.charAt(0)}</span>
+              )}
             </div>
 
-            {/* Sport Filter */}
-            <select 
-              value={sportFilter} 
-              onChange={(e) => setSportFilter(e.target.value)}
-              className="bg-[#F0F2F5] text-theme-charcoal text-[13px] font-semibold px-4 py-2 rounded-lg border-none focus:ring-2 focus:ring-theme-cobalt outline-none cursor-pointer"
-            >
-              {sports.map(sport => <option key={sport} value={sport}>{sport}</option>)}
-            </select>
-
-            {/* City Filter */}
-            <select 
-              value={cityFilter} 
-              onChange={(e) => setCityFilter(e.target.value)}
-              className="bg-[#F0F2F5] text-theme-charcoal text-[13px] font-semibold px-4 py-2 rounded-lg border-none focus:ring-2 focus:ring-theme-cobalt outline-none cursor-pointer"
-            >
-              {cities.map(city => <option key={city} value={city}>{city}</option>)}
-            </select>
-
-            {/* Availability Toggle */}
-            <label className="flex items-center gap-2 cursor-pointer ml-2">
-              <div className={`w-10 h-5 rounded-full relative transition-colors ${trialsOnly ? 'bg-[#10B981]' : 'bg-gray-300'}`}>
-                <div className={`w-4 h-4 rounded-full bg-white absolute top-0.5 transition-transform ${trialsOnly ? 'translate-x-5' : 'translate-x-0.5'}`} />
+            {/* Info */}
+            <div className="flex flex-col gap-1 w-full mb-4">
+              <h3 className="font-display font-extrabold text-[18px] text-[var(--color-ink)] leading-tight truncate uppercase tracking-wide">{user.name}</h3>
+              
+              <div className="flex items-center justify-center gap-1.5 mt-0.5">
+                <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest border border-[var(--color-ink)] text-[var(--color-ink)]`}>
+                  {user.role}
+                </span>
               </div>
-              <input 
-                type="checkbox" 
-                className="hidden" 
-                checked={trialsOnly} 
-                onChange={(e) => setTrialsOnly(e.target.checked)} 
-              />
-              <span className="text-[13px] font-bold text-theme-charcoal">Available for Trials</span>
-            </label>
+
+              <div className="text-[12px] text-[var(--color-gray-60)] font-mono mt-2 flex flex-col gap-1">
+                {user.sport && (
+                  <div className="truncate text-center">SPRT: {user.sport}</div>
+                )}
+                {user.city && (
+                  <div className="truncate text-center">LOC: {user.city}</div>
+                )}
+              </div>
+            </div>
+
+            {/* CTA */}
+            <div className="mt-auto w-full pt-4 border-t border-[var(--color-gray-15)]">
+              <Link href={`/profile/${user.id}`} className="block w-full py-2 bg-[var(--color-ink)] text-[var(--color-white)] text-[12px] font-bold uppercase tracking-widest text-center hover:bg-[var(--color-gray-60)] transition-colors">
+                View Profile
+              </Link>
+            </div>
           </div>
-        </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DiscoverContent() {
+  const topProspects = mockUsers.filter(u => u.role === 'athlete').slice(0, 6);
+  const eliteAcademies = mockUsers.filter(u => u.role === 'academy').slice(0, 6);
+  const availableForTrials = mockUsers.filter(u => u.available_for_trials).slice(0, 6);
+  const topCoaches = mockUsers.filter(u => u.role === 'coach').slice(0, 6);
+
+  return (
+    <div className="flex flex-col min-h-screen bg-[var(--color-paper)] md:bg-[var(--color-white)]">
+      {/* Header */}
+      <div className="px-4 md:px-6 py-6 border-b border-[var(--color-gray-15)] bg-[var(--color-white)] mb-6">
+        <h1 className="font-display text-3xl font-extrabold text-[var(--color-ink)] uppercase tracking-wide">Explore</h1>
+        <p className="text-[var(--color-gray-60)] text-[13px] font-mono mt-1 uppercase">Discover athletes, coaches, and organizations</p>
       </div>
 
-      {/* Results Area */}
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-4 text-[14px] font-semibold text-theme-slate">
-            Found {filteredUsers.length} result{filteredUsers.length !== 1 ? 's' : ''}
-          </div>
-
-          {filteredUsers.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-              {filteredUsers.map(user => (
-                <UserCard key={user.id} user={user} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-theme-border flex flex-col items-center mt-4">
-              <div className="w-16 h-16 bg-[#F0F2F5] rounded-full flex items-center justify-center mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 text-theme-slate">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                </svg>
-              </div>
-              <h3 className="text-[16px] font-bold text-theme-charcoal mb-1">No matches found</h3>
-              <p className="text-[14px] text-theme-slate max-w-sm">
-                We could not find any users matching your current filters. Try adjusting your search criteria or clearing some filters.
-              </p>
-              <button 
-                onClick={() => {
-                  setSearchQuery('');
-                  setRoleFilter('all');
-                  setSportFilter('All Sports');
-                  setCityFilter('All Cities');
-                  setTrialsOnly(false);
-                }}
-                className="mt-6 px-5 py-2 bg-black text-white text-[13px] font-bold rounded-lg hover:bg-theme-charcoal transition-colors"
-              >
-                Clear All Filters
-              </button>
-            </div>
-          )}
-        </div>
+      {/* Curated Rows */}
+      <div className="flex flex-col">
+        <CuratedRow title="Top Prospects" users={topProspects} />
+        <div className="lane-line mb-10 mx-4 md:mx-6" />
+        
+        <CuratedRow title="Elite Academies" users={eliteAcademies} />
+        <div className="lane-line mb-10 mx-4 md:mx-6" />
+        
+        <CuratedRow title="Available for Trials" users={availableForTrials} />
+        <div className="lane-line mb-10 mx-4 md:mx-6" />
+        
+        <CuratedRow title="Top Coaches" users={topCoaches} />
       </div>
     </div>
   );
@@ -164,7 +100,7 @@ function DiscoverContent() {
 
 export default function DiscoverPage() {
   return (
-    <Suspense fallback={<div className="flex h-full items-center justify-center bg-[#F8FAFC] text-sm font-semibold text-theme-slate">Loading discover...</div>}>
+    <Suspense fallback={<div className="flex h-screen items-center justify-center bg-[var(--color-paper)] font-mono text-[var(--color-gray-60)] uppercase">Loading...</div>}>
       <DiscoverContent />
     </Suspense>
   );
