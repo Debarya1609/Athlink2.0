@@ -7,7 +7,7 @@ import { RightSidebar } from '../../components/layout/RightSidebar';
 
 export default function CommunityLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-[var(--color-paper)] md:bg-[var(--color-white)] w-full max-w-[1280px] mx-auto flex justify-center ">
+    <div className="min-h-screen bg-[var(--color-white)] w-full flex justify-between">
       {/* Sidebar - Fixed Left (Desktop/Tablet) */}
       <div className="hidden md:flex w-fit transition-all duration-300 ease-in-out shrink-0 border-r border-[var(--color-gray-15)] bg-[var(--color-white)] h-screen sticky top-0">
         <Sidebar />
@@ -22,7 +22,7 @@ export default function CommunityLayout({ children }: { children: React.ReactNod
       </div>
 
       {/* Right Rail (Desktop Only - 320px) */}
-      <div className="hidden lg:block w-[320px] shrink-0 bg-[var(--color-paper)] h-screen sticky top-0 border-l border-[var(--color-gray-15)]">
+      <div className="hidden lg:block w-[320px] shrink-0 bg-[var(--color-white)] h-screen sticky top-0 border-l border-[var(--color-gray-15)]">
         <RightSidebar />
       </div>
 

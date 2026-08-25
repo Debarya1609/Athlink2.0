@@ -80,11 +80,11 @@ export function Sidebar() {
       <div className={`flex items-center h-20 px-4 border-b border-transparent ${!isExpanded && 'justify-center'}`}>
         {isExpanded ? (
           <Link href="/feed" className="block mx-auto overflow-hidden">
-            <img src="/Athlink-logo (0001).jpg" alt="Athlink Logo" className="h-14 w-auto object-contain scale-110 origin-left" />
+            <img src="/Athlink-logo (0001).jpg" alt="Athlink Logo" className="h-14 w-auto object-contain scale-110 origin-left transition-all duration-300" />
           </Link>
         ) : (
-          <Link href="/feed" className="block">
-            <img src="/Athlink-logo (0001).jpg" alt="Athlink Logo" className="h-10 w-auto object-contain" />
+          <Link href="/feed" className="block overflow-hidden rounded-full">
+            <img src="/Athlink-icon (0001).jpg" alt="Athlink Icon" className="h-10 w-10 object-cover transition-all duration-300" />
           </Link>
         )}
       </div>
