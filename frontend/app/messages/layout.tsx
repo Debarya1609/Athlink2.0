@@ -5,8 +5,7 @@ import { Header } from '../../components/layout/Header';
 export default function MessagesLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-transparent flex">
-      {/* Sidebar - Fixed Left */}
-      <div className="hidden md:block w-[260px] shrink-0 border-r border-theme-border bg-white h-screen sticky top-0">
+      <div className="hidden md:flex w-fit transition-all duration-300 ease-in-out shrink-0 border-r border-[var(--color-gray-15)] bg-white h-screen sticky top-0">
         <Sidebar />
       </div>
       
