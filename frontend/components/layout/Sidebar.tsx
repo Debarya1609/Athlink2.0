@@ -64,22 +64,27 @@ export function Sidebar() {
   ];
 
   return (
-    <aside className={`flex flex-col h-full bg-[var(--color-white)] transition-all duration-300 ease-in-out ${isExpanded ? 'w-[260px]' : 'w-[80px]'}`}>
+    <aside className={`relative flex flex-col h-full bg-[var(--color-white)] transition-all duration-300 ease-in-out ${isExpanded ? 'w-[260px]' : 'w-[80px]'}`}>
       
-      {/* Top Section: Hamburger + Logo */}
-      <div className="flex items-center h-16 px-4 border-b border-transparent">
-        <button 
-          onClick={toggleSidebar}
-          className="p-2 hover:bg-[var(--color-paper)] rounded-lg text-[var(--color-ink)] transition-colors flex-shrink-0"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-          </svg>
-        </button>
+      {/* Floating Toggle Button */}
+      <button 
+        onClick={toggleSidebar}
+        className="absolute -right-[15px] top-6 w-[30px] h-[30px] bg-white border border-[var(--color-gray-15)] rounded-full flex items-center justify-center text-[var(--color-ink)] shadow-sm hover:shadow-md transition-all z-50"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+        </svg>
+      </button>
 
-        {isExpanded && (
-          <Link href="/feed" className="block ml-3 overflow-hidden">
-            <img src="/Athlink-logo (0001).jpg" alt="Athlink Logo" className="h-8 w-auto object-contain" />
+      {/* Top Section: Logo */}
+      <div className={`flex items-center h-20 px-4 border-b border-transparent ${!isExpanded && 'justify-center'}`}>
+        {isExpanded ? (
+          <Link href="/feed" className="block mx-auto overflow-hidden">
+            <img src="/Athlink-logo (0001).jpg" alt="Athlink Logo" className="h-14 w-auto object-contain scale-110 origin-left" />
+          </Link>
+        ) : (
+          <Link href="/feed" className="block">
+            <img src="/Athlink-logo (0001).jpg" alt="Athlink Logo" className="h-10 w-auto object-contain" />
           </Link>
         )}
       </div>
@@ -101,6 +106,21 @@ export function Sidebar() {
             </Link>
           ))}
         </nav>
+
+        {/* Create Post Button */}
+        <div className="px-4 mt-2">
+          {isExpanded ? (
+            <button className="w-full bg-[var(--color-ink)] text-[var(--color-white)] font-display font-bold uppercase tracking-widest text-[12px] py-3 rounded-lg hover:bg-[var(--color-gray-60)] transition-colors shadow-sm">
+              Create Post
+            </button>
+          ) : (
+            <button className="w-12 h-12 mx-auto bg-[var(--color-ink)] text-[var(--color-white)] rounded-lg hover:bg-[var(--color-gray-60)] transition-colors flex items-center justify-center shadow-sm" title="Create Post">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+            </button>
+          )}
+        </div>
 
         {/* Expandable Community Section */}
         {isExpanded && (
