@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { Big_Shoulders_Display, Inter, JetBrains_Mono } from "next/font/google";
+import { Oswald, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/AuthContext";
 import { SocketProvider } from "@/lib/SocketContext";
 
-const bigShoulders = Big_Shoulders_Display({
+const displayFont = Oswald({
   subsets: ["latin"],
   variable: "--font-display",
 });
@@ -32,7 +32,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`h-full antialiased ${bigShoulders.variable} ${inter.variable} ${jetbrainsMono.variable}`}
+      className={`h-full antialiased ${displayFont.variable} ${inter.variable} ${jetbrainsMono.variable}`}
     >
       <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>
         <AuthProvider>
