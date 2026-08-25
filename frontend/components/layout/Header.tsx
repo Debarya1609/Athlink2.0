@@ -74,17 +74,32 @@ export function Header() {
   }, []);
 
   return (
-    <header className="h-16 bg-white border-b border-theme-border flex items-center justify-between px-6 sticky top-0 z-40">
-      {/* Search Bar */}
-      <div className="flex-1 max-w-xl" ref={searchRef}>
+    <header className="h-16 bg-[var(--color-white)] border-b border-[var(--color-gray-15)] flex items-center justify-between px-4 md:px-6 sticky top-0 z-40">
+      
+      {/* Mobile Wordmark (Visible only on mobile) */}
+      <div className="md:hidden flex-1 flex justify-center items-center font-display text-2xl font-bold text-[var(--color-ink)] absolute left-0 w-full pointer-events-none">
+        AthLink
+      </div>
+
+      {/* Mobile Menu Icon (Placeholder for future rail toggle) */}
+      <div className="md:hidden">
+        <button className="text-[var(--color-ink)]">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Search Bar (Hidden on mobile) */}
+      <div className="hidden md:block flex-1 max-w-xl" ref={searchRef}>
         <div className="relative">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-theme-slate">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-gray-40)]">
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
           </svg>
           <input 
             type="text" 
             placeholder="Search Athletes, Organizations, Listings..." 
-            className="w-full bg-[#F0F2F5] text-theme-charcoal placeholder-theme-slate rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:ring-1 focus:ring-theme-border text-sm"
+            className="w-full bg-[var(--color-paper)] text-[var(--color-ink)] placeholder-[var(--color-gray-60)] rounded-none border-b border-[var(--color-gray-15)] pl-10 pr-4 py-2 focus:outline-none focus:border-[var(--color-ink)] text-sm transition-colors"
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
@@ -95,7 +110,7 @@ export function Header() {
           
           {/* Search Dropdown Overlay */}
           {showDropdown && searchQuery && (
-            <div className="absolute top-full left-0 w-full mt-2 bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.1)] border border-theme-border overflow-hidden z-50">
+            <div className="absolute top-full left-0 w-full mt-0 bg-[var(--color-white)] shadow-sm border border-[var(--color-gray-15)] z-50">
               {filteredUsers.length > 0 ? (
                 <div className="flex flex-col">
                   {filteredUsers.map(user => (
@@ -103,9 +118,9 @@ export function Header() {
                       key={user.id} 
                       href={`/profile/${user.id}`}
                       onClick={() => setShowDropdown(false)}
-                      className="flex items-center gap-3 p-3 hover:bg-[#F8FAFC] transition-colors border-b border-theme-border/50 last:border-0"
+                      className="flex items-center gap-3 p-3 hover:bg-[var(--color-paper)] transition-colors border-b border-[var(--color-gray-15)] last:border-0"
                     >
-                      <div className="w-10 h-10 rounded-full bg-[#F0F2F5] flex-shrink-0 flex items-center justify-center font-bold text-theme-slate overflow-hidden">
+                      <div className="w-10 h-10 rounded-full bg-[var(--color-paper)] flex-shrink-0 flex items-center justify-center font-bold text-[var(--color-gray-60)] overflow-hidden">
                         {user.photo_url ? (
                           <img src={user.photo_url} alt={user.name} className="w-full h-full object-cover" />
                         ) : (
@@ -113,19 +128,19 @@ export function Header() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="font-bold text-[14px] text-theme-charcoal truncate">{user.name}</div>
-                        <div className="text-[12px] text-theme-slate truncate capitalize">
+                        <div className="font-bold text-[14px] text-[var(--color-ink)] truncate">{user.name}</div>
+                        <div className="text-[12px] text-[var(--color-gray-60)] truncate capitalize">
                           {user.role} • {user.sport} {user.city ? `• ${user.city}` : ''}
                         </div>
                       </div>
                     </Link>
                   ))}
-                  <Link href={`/discover?q=${searchQuery}`} className="block p-3 text-center text-[13px] font-bold text-theme-cobalt hover:bg-[#F0F2F5] transition-colors">
+                  <Link href={`/discover?q=${searchQuery}`} className="block p-3 text-center text-[13px] font-bold text-[var(--color-ink)] hover:bg-[var(--color-paper)] transition-colors">
                     View all results for &quot;{searchQuery}&quot;
                   </Link>
                 </div>
               ) : (
-                <div className="p-4 text-center text-sm text-theme-slate">
+                <div className="p-4 text-center text-sm text-[var(--color-gray-60)]">
                   No results found for &quot;{searchQuery}&quot;
                 </div>
               )}
