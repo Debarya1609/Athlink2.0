@@ -1,47 +1,44 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-gold: #D4AF37;
-  --color-brand-black: #000000;
+  --color-ink: #0A0A0A;
+  --color-gold-flat: #D4AF37;
+  --color-white: #FFFFFF;
+  --color-paper: #FAFAFA;
+  --color-gray-90: #1A1A1A;
+  --color-gray-60: #4A4A4A;
+  --color-gray-40: #8A8A8A;
+  --color-gray-15: #E5E5E5;
   
-  --color-theme-gold: #D4AF37;
-  --color-theme-cobalt: #2E5BFF;
-  --color-theme-cerulean: #00BFFF;
-  --color-theme-teal: #0D9488;
-  --color-theme-coral: #FF4B4B;
-  --color-theme-charcoal: #334155;
-  --color-theme-slate: #64748B;
-  --color-theme-border: #E2E8F0;
+  --image-gold-shine: linear-gradient(120deg, #8A6A1A 0%, #D4AF37 35%, #F6E7A8 50%, #D4AF37 65%, #8A6A1A 100%);
 
-  /* Legacy fallbacks (optional, keeping for safety) */
-  --color-theme-alabaster: #F0F2F5;
-  --color-theme-dust: #E2E8F0;
-  --color-theme-carbon: #000000;
-
-  /* Role badge colors */
-  --color-role-athlete: #3B82F6;
-  --color-role-coach: #10B981;
-  --color-role-academy: #D4AF37;
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-mono);
+  --font-display: var(--font-display);
 }
 
 :root {
-  --background: #F0F2F5;
-  --foreground: #334155;
-  --font-geist-sans: Arial, Helvetica, sans-serif;
-  --font-geist-mono: "Courier New", Courier, monospace;
+  --background: var(--color-paper);
+  --foreground: var(--color-ink);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #000000;
+    --foreground: #FFFFFF;
   }
 }
 
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans);
+}
+
+/* The Signature Element: The Lane Line */
+.lane-line {
+  height: 1px;
+  background: var(--image-gold-shine);
+  width: 100%;
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */
