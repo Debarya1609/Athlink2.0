@@ -14,6 +14,10 @@ import { useAuth } from '@/lib/AuthContext'
 export default function SignupPage() {
   const router = useRouter()
   const { setCurrentUser } = useAuth()
+  
+  // Step Management
+  const [step, setStep] = useState<1 | 2>(1)
+  
   const [role, setRole] = useState<UserRole>('athlete')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -23,6 +27,8 @@ export default function SignupPage() {
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  
+  // Step 2 Fields
   const [city, setCity] = useState('')
   const [sport, setSport] = useState('')
 
@@ -38,6 +44,16 @@ export default function SignupPage() {
   // Academy specific
   const [academyType, setAcademyType] = useState('')
   const [establishedYear, setEstablishedYear] = useState('')
+
+  const handleNextStep = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!name || !username || !email || !password) {
+      setError('Please fill out all required fields to continue.')
+      return
+    }
+    setError('')
+    setStep(2)
+  }
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -95,122 +111,142 @@ export default function SignupPage() {
   }
 
   const roleCards = [
-    { id: 'athlete', label: 'Athlete', icon: '🏃‍♂️', color: 'border-role-athlete', bg: 'bg-blue-50 text-blue-700' },
-    { id: 'coach', label: 'Coach', icon: '📋', color: 'border-role-coach', bg: 'bg-green-50 text-green-700' },
-    { id: 'academy', label: 'Academy', icon: '🏢', color: 'border-brand-gold', bg: 'bg-yellow-50 text-yellow-700' },
+    { id: 'athlete', label: 'Athlete', icon: '🏃‍♂️', bg: 'bg-[var(--color-ink)] text-white border-transparent' },
+    { id: 'coach', label: 'Coach', icon: '📋', bg: 'bg-transparent text-[var(--color-ink)] border-[var(--color-ink)]' },
+    { id: 'academy', label: 'Academy', icon: '🏢', bg: 'bg-[image:var(--image-gold-shine)] text-[var(--color-ink)] border-transparent' },
   ]
 
   return (
     <div>
-      <h2 className="mt-2 mb-6 text-center text-2xl font-bold text-brand-black">
-        Create your account
+      <h2 className="mt-2 mb-2 text-center text-3xl font-display font-bold text-[var(--color-ink)] tracking-wide uppercase">
+        {step === 1 ? 'Create Account' : 'Profile Setup'}
       </h2>
+      <p className="text-center font-mono text-[12px] text-[var(--color-gray-60)] mb-6 uppercase">
+        Step {step} of 2
+      </p>
 
       {error && (
-        <div className="mb-4 rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+        <div className="mb-4 rounded-none bg-[var(--color-paper)] border-l-4 border-red-500 p-3 text-sm text-[var(--color-ink)] font-mono">
           {error}
         </div>
       )}
 
-      <div className="mb-8">
-        <label className="block text-sm font-medium text-brand-black mb-3 text-center">
-          I am joining as a...
-        </label>
-        <div className="grid grid-cols-3 gap-3">
-          {roleCards.map((r) => (
-            <button
-              key={r.id}
-              type="button"
-              onClick={() => setRole(r.id as UserRole)}
-              className={`
-                flex flex-col items-center justify-center p-3 rounded-lg border-2 transition-all
-                ${role === r.id ? `${r.color} ${r.bg} shadow-sm` : 'border-gray-200 bg-white hover:border-gray-300 text-gray-500'}
-              `}
-            >
-              <span className="text-2xl mb-1">{r.icon}</span>
-              <span className={`text-xs font-bold ${role === r.id ? '' : 'text-gray-600'}`}>{r.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+      {step === 1 ? (
+        <form onSubmit={handleNextStep} className="space-y-5">
+          <div className="mb-6">
+            <label className="block text-[11px] font-bold text-[var(--color-gray-40)] uppercase tracking-widest mb-3 text-center">
+              I am joining as a...
+            </label>
+            <div className="grid grid-cols-3 gap-3">
+              {roleCards.map((r) => (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => setRole(r.id as UserRole)}
+                  className={`
+                    flex flex-col items-center justify-center p-3 border transition-all
+                    ${role === r.id ? `${r.bg} shadow-md scale-105` : 'border-[var(--color-gray-15)] bg-[var(--color-white)] hover:bg-[var(--color-paper)] text-[var(--color-gray-60)]'}
+                  `}
+                >
+                  <span className="text-2xl mb-1">{r.icon}</span>
+                  <span className={`text-[11px] font-bold uppercase tracking-widest ${role === r.id ? '' : 'text-[var(--color-gray-60)]'}`}>{r.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
 
-      <form onSubmit={handleSignup} className="space-y-4">
-        {/* Common Fields */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="sm:col-span-2">
+          <div className="space-y-4">
             <Input label={role === 'academy' ? 'Academy Name' : 'Full Name'} required value={name} onChange={(e) => setName(e.target.value)} />
-          </div>
-          <div className="sm:col-span-2">
             <Input label="Username" required value={username} onChange={(e) => setUsername(e.target.value)} />
-          </div>
-          <div className="sm:col-span-2">
             <Input label="Email address" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+            <Input label="Password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
-          <Input label="Password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
-          <Input label="City" required value={city} onChange={(e) => setCity(e.target.value)} />
-          <Input label="Primary Sport" required value={sport} onChange={(e) => setSport(e.target.value)} placeholder="e.g. Cricket, Football" />
-        </div>
 
-        {/* Athlete Fields */}
-        {role === 'athlete' && (
-          <div className="pt-4 border-t border-gray-200 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input label="Position / Role" value={position} onChange={(e) => setPosition(e.target.value)} placeholder="e.g. Fast Bowler, Striker" />
-            <Input label="Age" type="number" value={age} onChange={(e) => setAge(e.target.value)} />
-            <div className="sm:col-span-2 flex items-center mt-2">
-              <input
-                id="trials"
-                type="checkbox"
-                className="h-4 w-4 text-brand-gold focus:ring-brand-gold border-gray-300 rounded"
-                checked={availableForTrials}
-                onChange={(e) => setAvailableForTrials(e.target.checked)}
-              />
-              <label htmlFor="trials" className="ml-2 block text-sm text-gray-900">
-                I am actively looking for trials and opportunities
-              </label>
-            </div>
+          <div className="pt-4">
+            <button type="submit" className="w-full bg-[var(--color-ink)] text-white font-bold uppercase tracking-widest text-sm py-3 hover:bg-[var(--color-gray-60)] transition-colors">
+              Continue to Step 2
+            </button>
           </div>
-        )}
-
-        {/* Coach Fields */}
-        {role === 'coach' && (
-          <div className="pt-4 border-t border-gray-200 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input label="Years of Experience" type="number" value={experience} onChange={(e) => setExperience(e.target.value)} />
-            <div className="sm:col-span-2 flex items-center mt-2">
-              <input
-                id="opps"
-                type="checkbox"
-                className="h-4 w-4 text-brand-gold focus:ring-brand-gold border-gray-300 rounded"
-                checked={openToOpportunities}
-                onChange={(e) => setOpenToOpportunities(e.target.checked)}
-              />
-              <label htmlFor="opps" className="ml-2 block text-sm text-gray-900">
-                I am open to new coaching opportunities
-              </label>
-            </div>
+          
+          <div className="mt-6 text-center text-sm font-mono text-[var(--color-gray-60)]">
+            Already have an account?{' '}
+            <Link href="/login" className="font-bold text-[var(--color-ink)] hover:underline uppercase">
+              Sign in
+            </Link>
           </div>
-        )}
+        </form>
+      ) : (
+        <form onSubmit={handleSignup} className="space-y-5">
+          <div className="space-y-4">
+            <Input label="City" required value={city} onChange={(e) => setCity(e.target.value)} />
+            <Input label="Primary Sport" required value={sport} onChange={(e) => setSport(e.target.value)} placeholder="e.g. Track, Football" />
+            
+            {/* Athlete Fields */}
+            {role === 'athlete' && (
+              <>
+                <Input label="Position / Speciality" value={position} onChange={(e) => setPosition(e.target.value)} placeholder="e.g. 100m Sprint, Striker" />
+                <Input label="Age" type="number" value={age} onChange={(e) => setAge(e.target.value)} />
+                <div className="flex items-center mt-2 p-3 border border-[var(--color-gray-15)] bg-[var(--color-paper)]">
+                  <input
+                    id="trials"
+                    type="checkbox"
+                    className="h-4 w-4 accent-[var(--color-ink)]"
+                    checked={availableForTrials}
+                    onChange={(e) => setAvailableForTrials(e.target.checked)}
+                  />
+                  <label htmlFor="trials" className="ml-3 block text-[13px] font-bold text-[var(--color-ink)] uppercase tracking-wide">
+                    Available for Trials
+                  </label>
+                </div>
+              </>
+            )}
 
-        {/* Academy Fields */}
-        {role === 'academy' && (
-          <div className="pt-4 border-t border-gray-200 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input label="Academy Type" value={academyType} onChange={(e) => setAcademyType(e.target.value)} placeholder="e.g. Private, Club, School" />
-            <Input label="Established Year" type="number" value={establishedYear} onChange={(e) => setEstablishedYear(e.target.value)} />
+            {/* Coach Fields */}
+            {role === 'coach' && (
+              <>
+                <Input label="Years of Experience" type="number" value={experience} onChange={(e) => setExperience(e.target.value)} />
+                <div className="flex items-center mt-2 p-3 border border-[var(--color-gray-15)] bg-[var(--color-paper)]">
+                  <input
+                    id="opps"
+                    type="checkbox"
+                    className="h-4 w-4 accent-[var(--color-ink)]"
+                    checked={openToOpportunities}
+                    onChange={(e) => setOpenToOpportunities(e.target.checked)}
+                  />
+                  <label htmlFor="opps" className="ml-3 block text-[13px] font-bold text-[var(--color-ink)] uppercase tracking-wide">
+                    Open to Opportunities
+                  </label>
+                </div>
+              </>
+            )}
+
+            {/* Academy Fields */}
+            {role === 'academy' && (
+              <>
+                <Input label="Academy Type" value={academyType} onChange={(e) => setAcademyType(e.target.value)} placeholder="e.g. Private, Club, School" />
+                <Input label="Established Year" type="number" value={establishedYear} onChange={(e) => setEstablishedYear(e.target.value)} />
+              </>
+            )}
           </div>
-        )}
 
-        <div className="pt-4">
-          <Button type="submit" fullWidth disabled={isLoading}>
-            {isLoading ? 'Creating account...' : 'Create account'}
-          </Button>
-        </div>
-      </form>
-
-      <div className="mt-6 text-center text-sm text-gray-600">
-        Already have an account?{' '}
-        <Link href="/login" className="font-medium text-brand-gold hover:text-yellow-600">
-          Sign in
-        </Link>
-      </div>
+          <div className="pt-6 flex gap-4">
+            <button 
+              type="button" 
+              onClick={() => setStep(1)} 
+              className="w-1/3 bg-[var(--color-paper)] text-[var(--color-ink)] font-bold uppercase tracking-widest text-[12px] py-3 hover:bg-[var(--color-gray-15)] transition-colors border border-[var(--color-gray-15)]"
+            >
+              Back
+            </button>
+            <button 
+              type="submit" 
+              disabled={isLoading}
+              className="w-2/3 bg-[image:var(--image-gold-shine)] text-[var(--color-ink)] font-extrabold uppercase tracking-widest text-[12px] py-3 hover:opacity-90 transition-opacity"
+            >
+              {isLoading ? 'Creating...' : 'Complete Signup'}
+            </button>
+          </div>
+        </form>
+      )}
     </div>
   )
 }
