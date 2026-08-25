@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import { CommentSection } from './CommentSection';
 import api from '@/lib/api';
 
+export type PostType = 'general' | 'announcement' | 'opportunity' | 'result';
+
 interface FeedPostProps {
   id: string;
   name: string;
@@ -15,22 +17,34 @@ interface FeedPostProps {
   likes: number;
   comments: number;
   hasLiked?: boolean;
+  postType?: PostType;
   onInteraction?: () => void;
 }
 
-export function FeedPost({ id, name, avatar, roleBadge, timestamp, content, image, likes, comments, hasLiked = false, onInteraction }: FeedPostProps) {
+export function FeedPost({ 
+  id, 
+  name, 
+  avatar, 
+  roleBadge = 'athlete', 
+  timestamp, 
+  content, 
+  image, 
+  likes, 
+  comments, 
+  hasLiked = false, 
+  postType = 'general',
+  onInteraction 
+}: FeedPostProps) {
   const [isLiking, setIsLiking] = useState(false);
-  // Parsing content to highlight hashtags in blue
+
   const renderContent = (text: string) => {
     return text.split(' ').map((word, idx) => {
       if (word.startsWith('#')) {
-        return <span key={idx} className="text-theme-cerulean">{word} </span>;
+        return <span key={idx} className="font-semibold text-[var(--color-ink)]">{word} </span>;
       }
       return word + ' ';
     });
   };
-
-
 
   const handleLike = async () => {
     if (isLiking) return;
@@ -45,105 +59,137 @@ export function FeedPost({ id, name, avatar, roleBadge, timestamp, content, imag
     }
   };
 
+  // Role Badge Styling
+  const getRoleBadgeStyle = (role: string) => {
+    const r = role.toLowerCase();
+    if (r === 'academy' || r === 'organization') {
+      return "bg-[image:var(--image-gold-shine)] text-[var(--color-ink)] border-none";
+    }
+    if (r === 'coach') {
+      return "bg-transparent text-[var(--color-ink)] border border-[var(--color-ink)]";
+    }
+    // Default / Athlete
+    return "bg-[var(--color-ink)] text-[var(--color-white)] border-none";
+  };
+
+  // Post Type Chip Styling
+  const renderPostTypeChip = () => {
+    if (postType === 'general') return null;
+
+    if (postType === 'announcement') {
+      return (
+        <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[image:var(--image-gold-shine)] text-[var(--color-ink)] text-[12px] font-bold uppercase tracking-wide">
+          Announcement
+        </span>
+      );
+    }
+    if (postType === 'opportunity') {
+      return (
+        <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-transparent border border-[var(--color-ink)] text-[var(--color-ink)] text-[12px] font-bold uppercase tracking-wide">
+          Opportunity
+        </span>
+      );
+    }
+    if (postType === 'result') {
+      return (
+        <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--color-ink)] text-[var(--color-white)] text-[12px] font-bold uppercase tracking-wide">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
+            <path fillRule="evenodd" d="M5.166 2.621v.858c-1.035.148-2.059.33-3.071.543a.75.75 0 00-.584.859 6.753 6.753 0 006.138 5.6 2.73 2.73 0 002.814 2.814 2.73 2.73 0 002.814-2.814 6.753 6.753 0 006.138-5.6.75.75 0 00-.584-.859 47.773 47.773 0 00-3.071-.543V2.62a.75.75 0 00-.65-.743 49.22 49.22 0 00-10.732 0 .75.75 0 00-.65.743zM4.02 5.234a49.856 49.856 0 012.833-.424 5.253 5.253 0 01-2.833 4.24zm13.127-4.24a49.856 49.856 0 00-2.833-.424 5.253 5.253 0 002.833 4.24zM10.5 15v3h3v-3h-3zm-1.5 4.5v1.5a.75.75 0 00.75.75h4.5a.75.75 0 00.75-.75V19.5h-6z" clipRule="evenodd" />
+          </svg>
+          Result
+        </span>
+      );
+    }
+    return null;
+  };
+
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.05)] transition-shadow duration-300 border border-transparent">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-[#F0F2F5] flex-shrink-0 flex items-center justify-center text-theme-charcoal font-semibold overflow-hidden border border-theme-border">
-            {avatar ? (
-              <img src={avatar} alt={name} className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-xl">S</span> // hardcoded for the mockup
-            )}
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-theme-charcoal text-[16px]">{name}</span>
-              {roleBadge && (
-                <span className="bg-theme-teal text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                  {roleBadge}
-                </span>
+    <div className="bg-[var(--color-white)] w-full transition-all duration-300">
+      <div className="p-4 md:p-6 pb-2">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-[var(--color-paper)] flex-shrink-0 flex items-center justify-center text-[var(--color-gray-60)] font-semibold overflow-hidden border border-[var(--color-gray-15)]">
+              {avatar ? (
+                <img src={avatar} alt={name} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-lg">{name.charAt(0)}</span>
               )}
             </div>
-            <div className="text-[13px] text-theme-slate font-medium">{timestamp}</div>
-          </div>
-        </div>
-        
-        {/* Top Right Bell Icon */}
-        <div className="relative cursor-pointer w-10 h-10 rounded-full bg-[#FFEAE6] flex items-center justify-center text-[#FF6B6B]">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-            <path fillRule="evenodd" d="M5.25 9a6.75 6.75 0 0113.5 0v.75c0 2.123.8 4.057 2.118 5.52a.75.75 0 01-.297 1.206c-1.544.57-3.16.99-4.831 1.243a3.75 3.75 0 11-7.48 0 24.585 24.585 0 01-4.831-1.244.75.75 0 01-.298-1.205A8.217 8.217 0 005.25 9.75V9zm4.502 8.9a2.25 2.25 0 104.496 0 25.057 25.057 0 01-4.496 0z" clipRule="evenodd" />
-          </svg>
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-theme-coral rounded-full text-white text-[10px] font-bold flex items-center justify-center border-2 border-white">
-            1
-          </span>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="mb-4 text-theme-charcoal text-[16px] leading-relaxed font-normal">
-        <p>{renderContent(content)}</p>
-        {image && (
-          <div className="mt-4 rounded-xl overflow-hidden shadow-sm relative group cursor-pointer">
-            <img src={image} alt="Post content" className="w-full h-[300px] object-cover" />
-            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-               <div className="w-14 h-14 bg-black/50 rounded-full flex items-center justify-center text-white backdrop-blur-sm">
-                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 ml-1">
-                   <path fillRule="evenodd" d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653z" clipRule="evenodd" />
-                 </svg>
-               </div>
+            <div className="flex flex-col -mt-0.5">
+              <div className="flex items-center flex-wrap gap-2">
+                <span className="font-display font-bold text-[var(--color-ink)] text-[16px] md:text-[18px] tracking-wide">{name}</span>
+                {roleBadge && (
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest ${getRoleBadgeStyle(roleBadge)}`}>
+                    {roleBadge}
+                  </span>
+                )}
+                <span className="font-mono text-[11px] text-[var(--color-gray-60)]">· {timestamp}</span>
+              </div>
             </div>
           </div>
-        )}
-      </div>
-
-      {/* Actions */}
-      <div className="flex items-center gap-6 py-2">
-        <button 
-          onClick={handleLike}
-          disabled={isLiking}
-          className={`flex items-center gap-1.5 text-[14px] font-medium transition-colors ${hasLiked ? 'text-theme-cerulean' : 'text-theme-slate hover:text-theme-cerulean'}`}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill={hasLiked ? "currentColor" : "none"} strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
-          </svg>
-          {likes} Like{likes !== 1 ? 's' : ''}
-        </button>
-        <button className="flex items-center gap-1.5 text-[14px] font-medium text-theme-slate hover:text-theme-cerulean transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-          </svg>
-          {comments} Comment{comments !== 1 ? 's' : ''}
-        </button>
-        <button className="flex items-center gap-1.5 text-[14px] font-medium text-theme-slate hover:text-theme-cerulean transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 00-3.7-3.7 48.678 48.678 0 00-7.324 0 4.006 4.006 0 00-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3l-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 003.7 3.7 48.656 48.656 0 007.324 0 4.006 4.006 0 003.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3l-3 3" />
-          </svg>
-          Repost
-        </button>
-        <button className="flex items-center gap-1.5 text-[14px] font-medium text-theme-slate hover:text-theme-cerulean transition-colors ml-auto">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
-          </svg>
-          Share
-        </button>
-      </div>
-
-      {/* Bottom Congratulate Action Box */}
-      <div className="mt-4 border-t border-theme-border pt-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-[#F0F2F5] overflow-hidden">
-             <img src="https://i.pravatar.cc/150?img=5" alt="Sarah" className="w-full h-full object-cover" />
-          </div>
-          <span className="text-[14px] font-semibold text-theme-charcoal">Sarah post</span>
+          
+          {postType !== 'general' && (
+            <div className="ml-2 flex-shrink-0">
+              {renderPostTypeChip()}
+            </div>
+          )}
         </div>
-        <button className="text-theme-teal text-[13px] font-semibold px-4 py-1.5 rounded-full border border-theme-teal hover:bg-theme-teal hover:text-white transition-colors">
-          Congratulate
-        </button>
+
+        {/* Content */}
+        <div className="ml-[52px] md:ml-[56px] mb-3">
+          <div className="text-[var(--color-ink)] text-[15px] leading-relaxed font-normal whitespace-pre-wrap">
+            <p>{renderContent(content)}</p>
+          </div>
+          
+          {image && (
+            <div className="mt-3 rounded-lg overflow-hidden border border-[var(--color-gray-15)] relative">
+              <img src={image} alt="Post content" className="w-full max-h-[500px] object-contain bg-[var(--color-paper)]" />
+            </div>
+          )}
+
+          {/* Actions (Threads style: icon only, mono counts) */}
+          <div className="flex items-center gap-6 mt-4 pb-2">
+            <button 
+              onClick={handleLike}
+              disabled={isLiking}
+              className={`flex items-center gap-1.5 text-[14px] transition-colors group ${hasLiked ? 'text-[var(--color-ink)]' : 'text-[var(--color-gray-60)] hover:text-[var(--color-ink)]'}`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill={hasLiked ? "currentColor" : "none"} strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 group-hover:scale-110 transition-transform">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+              </svg>
+              {likes > 0 && <span className="font-mono text-[12px]">{likes}</span>}
+            </button>
+
+            <button className="flex items-center gap-1.5 text-[14px] text-[var(--color-gray-60)] hover:text-[var(--color-ink)] transition-colors group">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 group-hover:scale-110 transition-transform">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z" />
+              </svg>
+              {comments > 0 && <span className="font-mono text-[12px]">{comments}</span>}
+            </button>
+
+            <button className="flex items-center gap-1.5 text-[14px] text-[var(--color-gray-60)] hover:text-[var(--color-ink)] transition-colors group">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 group-hover:scale-110 transition-transform">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 00-3.7-3.7 48.678 48.678 0 00-7.324 0 4.006 4.006 0 00-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3l-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 003.7 3.7 48.656 48.656 0 007.324 0 4.006 4.006 0 003.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3l-3 3" />
+              </svg>
+            </button>
+
+            <button className="flex items-center gap-1.5 text-[14px] text-[var(--color-gray-60)] hover:text-[var(--color-ink)] transition-colors group ml-auto">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 group-hover:scale-110 transition-transform">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.125A59.769 59.769 0 0121.485 12 59.768 59.768 0 013.27 20.875L5.999 12Zm0 0h7.5" />
+              </svg>
+            </button>
+          </div>
+        </div>
       </div>
       
-      <CommentSection postId={id} onCommentAdded={onInteraction} />
+      <div className="lane-line"></div>
+      
+      {/* 
+        CommentSection is currently unchanged below the lane line.
+        In a full Phase 2 rebuild, it would likely render inline or on a detail view.
+      */}
+      {/* <CommentSection postId={id} onCommentAdded={onInteraction} /> */}
 
     </div>
   );
