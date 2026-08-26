@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
 import pool from '../models/db'
 import { MediaType, UserRole } from '../types'
-import { emitToUser } from '../sockets/socketManager'
+import { emitToUser, broadcast } from '../sockets/gateway'
 
 interface CreatePostBody {
   content?: string | null
@@ -444,13 +444,15 @@ export const likePost = async (
     )
 
     if (post.user_id !== req.user.id) {
-      await pool.query(
-        `INSERT INTO notifications (user_id, type, message)
-         VALUES ($1, $2, $3)`,
-        [post.user_id, 'like', 'Someone liked your post']
-      )
-      emitToUser(post.user_id, 'new_notification', { type: 'like', message: 'Someone liked your post' })
-    }
+        await pool.query(
+          `INSERT INTO notifications (user_id, type, message)
+           VALUES ($1, $2, $3)`,
+          [post.user_id, 'like', 'Someone liked your post']
+        )
+        emitToUser(post.user_id, 'new_notification', { type: 'like', message: 'Someone liked your post' })
+      }
+      
+      broadcast('post_interaction', { type: 'like', postId: postId })
 
     res.status(201).json({
       data: {
@@ -498,6 +500,8 @@ export const unlikePost = async (
       res.status(404).json({ error: 'Like not found' })
       return
     }
+
+    broadcast('post_interaction', { type: 'unlike', postId: postId })
 
     res.status(200).json({
       data: {
@@ -549,15 +553,64 @@ export const commentOnPost = async (
     )
 
     if (post.user_id !== req.user.id) {
-      await pool.query(
-        `INSERT INTO notifications (user_id, type, message)
-         VALUES ($1, $2, $3)`,
-        [post.user_id, 'comment', 'Someone commented on your post']
-      )
-      emitToUser(post.user_id, 'new_notification', { type: 'comment', message: 'Someone commented on your post' })
+        await pool.query(
+          `INSERT INTO notifications (user_id, type, message)
+           VALUES ($1, $2, $3)`,
+          [post.user_id, 'comment', 'Someone commented on your post']
+        )
+        emitToUser(post.user_id, 'new_notification', { type: 'comment', message: 'Someone commented on your post' })
+      }
+      
+      broadcast('post_interaction', { type: 'comment', postId: postId, comment: result.rows[0] })
+
+      res.status(201).json({ data: result.rows[0] })
+  } catch (err) {
+    res.status(500).json({ error: getErrorMessage(err) })
+  }
+}
+
+export const deleteComment = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: 'Unauthorized' })
+      return
     }
 
-    res.status(201).json({ data: result.rows[0] })
+    const commentId = getParamString(req.params.id)
+
+    if (!commentId || !isValidUuid(commentId)) {
+      res.status(400).json({ error: 'Valid comment id is required' })
+      return
+    }
+
+    const commentResult = await pool.query(
+      `SELECT c.id, c.user_id as commenter_id, c.post_id, p.user_id as post_owner_id
+       FROM comments c
+       JOIN posts p ON c.post_id = p.id
+       WHERE c.id = $1`,
+      [commentId]
+    )
+
+    if (commentResult.rows.length === 0) {
+      res.status(404).json({ error: 'Comment not found' })
+      return
+    }
+
+    const { commenter_id, post_owner_id, post_id } = commentResult.rows[0]
+
+    if (req.user.id !== commenter_id && req.user.id !== post_owner_id) {
+      res.status(403).json({ error: 'Forbidden' })
+      return
+    }
+
+    await pool.query('DELETE FROM comments WHERE id = $1', [commentId])
+
+    broadcast('post_interaction', { type: 'delete_comment', postId: post_id, commentId: commentId })
+
+    res.status(200).json({ message: 'Comment deleted successfully' })
   } catch (err) {
     res.status(500).json({ error: getErrorMessage(err) })
   }

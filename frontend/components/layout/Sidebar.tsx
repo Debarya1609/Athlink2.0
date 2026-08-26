@@ -3,10 +3,12 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/AuthContext';
+import { CreatePostModal } from '@/components/feed/CreatePostModal';
 
 export function Sidebar() {
   const { currentUser } = useAuth();
   const [isExpanded, setIsExpanded] = useState(true);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   React.useEffect(() => {
     const saved = localStorage.getItem('athlink_sidebar_expanded');
@@ -110,11 +112,11 @@ export function Sidebar() {
         {/* Create Post Button */}
         <div className="px-4 mt-2">
           {isExpanded ? (
-            <button className="w-full bg-[var(--color-ink)] text-[var(--color-white)] font-display font-bold uppercase tracking-widest text-[12px] py-3 rounded-lg hover:bg-[var(--color-gray-60)] transition-colors shadow-sm">
+            <button onClick={() => setIsCreateModalOpen(true)} className="w-full bg-[var(--color-ink)] text-[var(--color-white)] font-display font-bold uppercase tracking-widest text-[12px] py-3 rounded-lg hover:bg-[var(--color-gray-60)] transition-colors shadow-sm">
               Create Post
             </button>
           ) : (
-            <button className="w-12 h-12 mx-auto bg-[var(--color-ink)] text-[var(--color-white)] rounded-lg hover:bg-[var(--color-gray-60)] transition-colors flex items-center justify-center shadow-sm" title="Create Post">
+            <button onClick={() => setIsCreateModalOpen(true)} className="w-12 h-12 mx-auto bg-[var(--color-ink)] text-[var(--color-white)] rounded-lg hover:bg-[var(--color-gray-60)] transition-colors flex items-center justify-center shadow-sm" title="Create Post">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
               </svg>
@@ -139,7 +141,7 @@ export function Sidebar() {
 
       {/* Bottom: Profile */}
       <div className="mt-auto p-4 border-t border-[var(--color-gray-15)]">
-        <Link href="/profile" className={`flex items-center gap-3 rounded-lg hover:bg-[var(--color-paper)] transition-colors ${isExpanded ? 'p-2' : 'p-2 justify-center'}`}>
+        <Link href={`/profile/${currentUser?.id || ''}`} className={`flex items-center gap-3 rounded-lg hover:bg-[var(--color-paper)] transition-colors ${isExpanded ? 'p-2' : 'p-2 justify-center'}`}>
           <div className="w-10 h-10 rounded-full bg-[var(--color-paper)] flex items-center justify-center text-[var(--color-ink)] font-display font-bold border border-[var(--color-gray-15)] shadow-sm overflow-hidden flex-shrink-0">
             {currentUser?.photo_url ? (
               <img src={currentUser.photo_url} alt={currentUser.name} className="w-full h-full object-cover" />
@@ -155,6 +157,13 @@ export function Sidebar() {
           )}
         </Link>
       </div>
+      
+      {isCreateModalOpen && (
+        <CreatePostModal 
+          onClose={() => setIsCreateModalOpen(false)} 
+          onPostCreated={() => window.location.reload()} 
+        />
+      )}
     </aside>
   );
 }

@@ -136,6 +136,7 @@ export default function DiscoverPage() {
               <FeedPost 
                 key={post.id}
                 id={post.id}
+                authorId={post.author?.id || ''}
                 name={post.author?.name || 'Unknown User'}
                 avatar={post.author?.photo_url || ''}
                 roleBadge={post.author?.role || 'User'}

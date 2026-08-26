@@ -50,8 +50,8 @@ export default function FeedPage() {
       {/* Stories Section - Always top, monochromatic */}
       <div className="py-4 px-4 md:px-6 overflow-hidden">
         <div className="flex items-center gap-4 overflow-x-auto no-scrollbar">
-          {/* Add Story Button */}
-          <div className="flex flex-col items-center gap-2 cursor-pointer flex-shrink-0">
+          {/* Add Story Button (Hidden on Desktop) */}
+          <div className="flex flex-col items-center gap-2 cursor-pointer flex-shrink-0 lg:hidden">
             <div className="h-[56px] w-[56px] rounded-full border border-[var(--color-gray-15)] flex items-center justify-center text-[var(--color-ink)] hover:bg-[var(--color-paper)] transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -100,6 +100,7 @@ export default function FeedPage() {
             <FeedPost 
               key={post.id}
               id={post.id}
+              authorId={post.author?.id || ''}
               name={post.author?.name || 'Unknown User'}
               avatar={post.author?.photo_url || ''}
               roleBadge={post.author?.role || 'User'}

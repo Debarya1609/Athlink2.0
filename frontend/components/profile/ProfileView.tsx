@@ -283,6 +283,7 @@ export function ProfileView({ userId }: { userId: string }) {
                 <FeedPost 
                   key={post.id}
                   id={post.id}
+                  authorId={post.author?.id || ''}
                   name={post.author?.name || 'Unknown'}
                   avatar={post.author?.photo_url || ''}
                   roleBadge={post.author?.role || 'User'}

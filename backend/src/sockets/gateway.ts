@@ -46,6 +46,7 @@ export const initSocket = (server: HttpServer) => {
     
     // Bind to Global Redis
     await setSession(user.id, SERVER_IP, socket.id);
+    socket.join(user.id);
     console.log(`User connected: ${user.id} to node ${SERVER_IP}`);
 
     socket.on('send_message', async (payload) => {
@@ -94,4 +95,16 @@ export const initSocket = (server: HttpServer) => {
 export const getIo = () => {
   if (!io) throw new Error('Socket.io not initialized!');
   return io;
+};
+
+export const emitToUser = async (userId: string, event: string, payload: any) => {
+  if (!io) return;
+  // If we had the socket ID from Redis, we could emit directly.
+  // For now, emit to a room named after the user ID.
+  io.to(userId).emit(event, payload);
+};
+
+export const broadcast = (event: string, payload: any) => {
+  if (!io) return;
+  io.emit(event, payload);
 };

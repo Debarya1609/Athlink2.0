@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '@/lib/api';
 import { useAuth } from '@/lib/AuthContext';
+import { useSocket } from '@/lib/SocketContext';
 
 interface CommentType {
   id: string;
@@ -20,12 +21,14 @@ interface CommentType {
 
 interface CommentSectionProps {
   postId: string;
+  startExpanded?: boolean;
   onCommentAdded?: () => void;
 }
 
-export function CommentSection({ postId, onCommentAdded }: CommentSectionProps) {
+export function CommentSection({ postId, startExpanded = true, onCommentAdded }: CommentSectionProps) {
   const { currentUser } = useAuth();
-  const [expanded, setExpanded] = useState(false);
+  const { socket } = useSocket();
+  const [expanded, setExpanded] = useState(startExpanded);
   const [comments, setComments] = useState<CommentType[]>([]);
   const [loading, setLoading] = useState(false);
   const [inputText, setInputText] = useState('');
@@ -49,18 +52,52 @@ export function CommentSection({ postId, onCommentAdded }: CommentSectionProps) 
     }
   }, [expanded, fetchComments]);
 
+  useEffect(() => {
+    if (!socket || !expanded) return;
+
+    const handleInteraction = (data: any) => {
+      if (data.postId === postId) {
+        if (data.type === 'comment' && data.comment) {
+          // Check if we already have it to avoid duplicates
+          setComments(prev => {
+            if (prev.some(c => c.id === data.comment.id)) return prev;
+            fetchComments();
+            return prev;
+          });
+        } else if (data.type === 'delete_comment' && data.commentId) {
+          setComments(prev => prev.filter(c => c.id !== data.commentId));
+        }
+      }
+    };
+
+    socket.on('post_interaction', handleInteraction);
+    return () => {
+      socket.off('post_interaction', handleInteraction);
+    };
+  }, [socket, expanded, postId, fetchComments]);
+
   const handlePostComment = async () => {
     if (!inputText.trim() || posting) return;
     setPosting(true);
     try {
       await api.post(`/feed/${postId}/comment`, { content: inputText });
       setInputText('');
+      // We rely on the socket event to refetch, or we can fetch immediately
       await fetchComments();
       if (onCommentAdded) onCommentAdded();
     } catch (err) {
       console.error(err);
     } finally {
       setPosting(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    try {
+      await api.delete(`/feed/comment/${commentId}`);
+      setComments(prev => prev.filter(c => c.id !== commentId));
+    } catch (err) {
+      console.error('Failed to delete comment', err);
     }
   };
 
@@ -117,18 +154,29 @@ export function CommentSection({ postId, onCommentAdded }: CommentSectionProps) 
           {comments.map(comment => (
             <div key={comment.id} className="flex gap-3 mb-2">
               <div className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0 flex items-center justify-center font-bold text-gray-500 overflow-hidden">
-                {comment.user.photo_url ? (
+                {comment.user?.photo_url ? (
                   <img src={comment.user.photo_url} alt={comment.user.name} className="w-full h-full object-cover" />
                 ) : (
-                  comment.user.name.charAt(0)
+                  comment.user?.name?.charAt(0) || 'U'
                 )}
               </div>
-              <div className="bg-[#F8FAFC] rounded-xl p-3 flex-grow border border-theme-border/50">
-                <div className="flex items-baseline gap-2 mb-1">
-                  <span className="font-semibold text-[13px] text-theme-charcoal">{comment.user.name}</span>
-                  <span className="text-[11px] text-theme-slate font-medium">
-                    {new Date(comment.created_at).toLocaleDateString()}
-                  </span>
+              <div className="bg-[#F8FAFC] rounded-xl p-3 flex-grow border border-theme-border/50 group relative">
+                <div className="flex items-baseline justify-between mb-1">
+                  <div className="flex items-baseline gap-2">
+                    <span className="font-semibold text-[13px] text-theme-charcoal">{comment.user?.name || 'Unknown'}</span>
+                    <span className="text-[11px] text-theme-slate font-medium">
+                      {new Date(comment.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                  {/* Delete Button for Commenter */}
+                  {currentUser?.id === comment.user_id && (
+                    <button 
+                      onClick={() => handleDeleteComment(comment.id)}
+                      className="hidden group-hover:block text-[10px] text-red-500 hover:underline uppercase tracking-wide"
+                    >
+                      Delete
+                    </button>
+                  )}
                 </div>
                 <p className="text-[13px] text-theme-charcoal mt-0.5 whitespace-pre-wrap">{comment.content}</p>
               </div>
