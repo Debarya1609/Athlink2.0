@@ -14,6 +14,9 @@ const upload = multer({
   }
 })
 
+import { getPresignedUrl } from '../controllers/uploadController'
+
 router.post('/upload', authMiddleware, upload.single('file'), uploadMedia)
+router.post('/presigned', authMiddleware, getPresignedUrl)
 
 export default router

@@ -159,15 +159,21 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       [user.id]
     )
 
-    await client.query('COMMIT')
-
     const token = jwt.sign(
       { id: user.id, role: user.role },
       jwtSecret,
-      { expiresIn: '7d' }
+      { expiresIn: '15m' }
     )
 
-    res.status(201).json({ token, user })
+    const crypto = require('crypto')
+    const refreshToken = crypto.randomBytes(40).toString('hex')
+    await client.query(
+      "INSERT INTO refresh_tokens (token, user_id, expires_at) VALUES ($1, $2, NOW() + INTERVAL '30 days')",
+      [refreshToken, user.id]
+    )
+    await client.query('COMMIT') // moved commit down
+
+    res.status(201).json({ token, refresh_token: refreshToken, user })
   } catch (err) {
     if (client) {
       await client.query('ROLLBACK')
@@ -240,11 +246,19 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const token = jwt.sign(
       { id: user.id, role: user.role },
       jwtSecret,
-      { expiresIn: '7d' }
+      { expiresIn: '15m' }
+    )
+
+    const crypto = require('crypto')
+    const refreshToken = crypto.randomBytes(40).toString('hex')
+    await pool.query(
+      "INSERT INTO refresh_tokens (token, user_id, expires_at) VALUES ($1, $2, NOW() + INTERVAL '30 days')",
+      [refreshToken, user.id]
     )
 
     res.status(200).json({
       token,
+      refresh_token: refreshToken,
       user: {
         id: user.id,
         name: user.name,
@@ -276,6 +290,48 @@ export const getMe = async (req: Request, res: Response): Promise<void> => {
     }
 
     res.status(200).json({ user: result.rows[0] })
+  } catch (err) {
+    res.status(500).json({ error: getErrorMessage(err) })
+  }
+}
+
+export const refreshToken = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { refresh_token } = req.body
+    if (!refresh_token) {
+      res.status(401).json({ error: 'Refresh token required' })
+      return
+    }
+
+    const result = await pool.query<{ user_id: string }>(
+      'SELECT user_id FROM refresh_tokens WHERE token = $1 AND expires_at > NOW()',
+      [refresh_token]
+    )
+
+    if (result.rows.length === 0) {
+      res.status(401).json({ error: 'Invalid or expired refresh token' })
+      return
+    }
+
+    const userId = result.rows[0].user_id
+    const userRes = await pool.query<{ role: string }>(
+      'SELECT role FROM users WHERE id = $1',
+      [userId]
+    )
+
+    if (userRes.rows.length === 0) {
+      res.status(401).json({ error: 'User not found' })
+      return
+    }
+
+    const jwtSecret = process.env.JWT_SECRET || 'secret'
+    const newToken = jwt.sign(
+      { id: userId, role: userRes.rows[0].role },
+      jwtSecret,
+      { expiresIn: '15m' }
+    )
+
+    res.status(200).json({ token: newToken })
   } catch (err) {
     res.status(500).json({ error: getErrorMessage(err) })
   }

@@ -187,6 +187,24 @@ export const getMessages = async (
       [userId, req.user.id]
     )
 
+    // Support cursor pagination (high-watermark)
+    const afterTimestamp = req.query.after_timestamp as string;
+    const beforeTimestamp = req.query.before_timestamp as string;
+
+    let timeFilter = '';
+    const queryParams: any[] = [req.user.id, userId];
+    let paramIndex = 3;
+
+    if (afterTimestamp) {
+      timeFilter = `AND m.created_at > $${paramIndex}`;
+      queryParams.push(afterTimestamp);
+      paramIndex++;
+    } else if (beforeTimestamp) {
+      timeFilter = `AND m.created_at < $${paramIndex}`;
+      queryParams.push(beforeTimestamp);
+      paramIndex++;
+    }
+
     const result = await pool.query<MessageWithSenderRow>(
       `SELECT
          m.id,
@@ -201,13 +219,17 @@ export const getMessages = async (
        FROM messages m
        INNER JOIN users u ON u.id = m.sender_id
        LEFT JOIN profiles p ON p.user_id = u.id
-       WHERE (m.sender_id = $1 AND m.receiver_id = $2)
-          OR (m.sender_id = $2 AND m.receiver_id = $1)
-       ORDER BY m.created_at ASC`,
-      [req.user.id, userId]
+       WHERE ((m.sender_id = $1 AND m.receiver_id = $2)
+          OR (m.sender_id = $2 AND m.receiver_id = $1))
+          ${timeFilter}
+       ORDER BY m.created_at DESC
+       LIMIT 50`,
+      queryParams
     )
 
-    res.status(200).json({ data: result.rows.map(mapMessage) })
+    // Reverse to send oldest first for UI
+    const reversedRows = result.rows.reverse();
+    res.status(200).json({ data: reversedRows.map(mapMessage) })
   } catch (err) {
     res.status(500).json({ error: getErrorMessage(err) })
   }
