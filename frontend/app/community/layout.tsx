@@ -12,7 +12,7 @@ export default function CommunityLayout({ children }: { children: React.ReactNod
       </div>
       
       {/* Main Content Area (Max width capped at 640px per blueprint) */}
-      <div className="flex-1 flex flex-col min-w-0 max-w-[640px] bg-[var(--color-white)] border-r border-[var(--color-gray-15)] shadow-[0_0_40px_rgba(0,0,0,0.02)]">
+      <div className="flex-1 flex flex-col min-w-0 max-w-[640px] bg-[var(--color-white)] ">
         <main className="flex-1 w-full pb-20 md:pb-0 overflow-x-hidden">
           {children}
         </main>
