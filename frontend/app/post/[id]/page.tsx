@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { FeedPost } from '@/components/feed/FeedPost';
 import { CommentSection } from '@/components/feed/CommentSection';
 import api from '@/lib/api';
 
-export default function PostPage({ params }: { params: { id: string } }) {
+export default function PostPage({ params }: { params: any }) {
+  const unwrappedParams = use(params as any) as { id: string };
   const router = useRouter();
   const [post, setPost] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -14,7 +15,7 @@ export default function PostPage({ params }: { params: { id: string } }) {
   useEffect(() => {
     const fetchPost = async () => {
       try {
-        const { data } = await api.get(`/feed/post/${params.id}`);
+        const { data } = await api.get(`/feed/post/${unwrappedParams.id}`);
         setPost(data.data);
       } catch (err) {
         console.error(err);
@@ -23,7 +24,7 @@ export default function PostPage({ params }: { params: { id: string } }) {
       }
     };
     fetchPost();
-  }, [params.id]);
+  }, [unwrappedParams.id]);
 
   if (loading) {
     return (
