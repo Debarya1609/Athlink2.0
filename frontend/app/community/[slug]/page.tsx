@@ -55,6 +55,7 @@ export default function CommunitySlugPage({ params }: { params: { slug: string }
           <FeedPost 
             key={post.id}
             id={post.id.toString()}
+            authorId={post.id.toString()}
             name={post.name}
             avatar={post.avatar}
             roleBadge={post.roleBadge}

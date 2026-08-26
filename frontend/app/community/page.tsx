@@ -88,6 +88,7 @@ export default function CommunityPage() {
           <FeedPost 
             key={post.id}
             id={post.id.toString()}
+            authorId={post.id.toString()}
             name={post.name}
             avatar={post.avatar}
             roleBadge={post.roleBadge}
