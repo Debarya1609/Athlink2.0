@@ -24,8 +24,8 @@ export default function ProfileFeed({ posts, onInteraction }: ProfileFeedProps) 
           <FeedPost 
             key={post.id}
             id={post.id}
-            authorId={post.author?.id || ''}
-            name={post.author?.name || 'Unknown'}
+            authorId={(post as any).author?.id || post.user?.id || ''}
+            name={(post as any).author?.name || post.user?.name || 'Unknown'}
             avatar={post.user?.photo_url || ''}
             roleBadge={post.user?.role}
             timestamp={new Date(post.created_at).toLocaleDateString()}
