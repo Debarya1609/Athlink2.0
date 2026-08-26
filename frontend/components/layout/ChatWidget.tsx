@@ -170,12 +170,12 @@ export function ChatWidget() {
 
   if (isOpen && !isMaximized) {
     return (
-      <div className="fixed bottom-0 right-6 z-50 w-72 bg-white rounded-t-xl shadow-[0_-4px_20px_rgba(0,0,0,0.1)] border border-theme-border flex justify-between items-center px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => setIsMaximized(true)}>
+      <div className="fixed bottom-0 right-6 z-50 w-72 bg-white rounded-t-xl shadow-[0_-4px_20px_rgba(0,0,0,0.1)] border border-[var(--color-gray-15)] flex justify-between items-center px-4 py-3 cursor-pointer hover:bg-[var(--color-paper)] transition-colors" onClick={() => setIsMaximized(true)}>
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-theme-cobalt flex items-center justify-center text-white font-bold text-sm">
+          <div className="w-8 h-8 rounded-full bg-[var(--color-ink)] flex items-center justify-center text-[var(--color-white)] font-display font-bold text-sm">
             {currentUser.name.charAt(0)}
           </div>
-          <span className="font-bold text-[14px] text-theme-charcoal">Messages</span>
+          <span className="font-display font-bold uppercase tracking-widest text-[14px] text-[var(--color-ink)]">Inbox</span>
         </div>
         <div className="flex items-center gap-1">
           <button onClick={(e) => { e.stopPropagation(); setIsOpen(false); }} className="text-theme-slate hover:text-theme-coral p-1 rounded-full hover:bg-gray-200">
@@ -191,25 +191,36 @@ export function ChatWidget() {
   return (
     <div className="fixed bottom-0 right-6 z-50 flex flex-col items-end">
       {isOpen && isMaximized && (
-        <div className="bg-white rounded-t-xl shadow-[0_4px_20px_rgba(0,0,0,0.15)] border border-theme-border w-[700px] max-w-[calc(100vw-48px)] h-[500px] flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 duration-200">
-          <div className="bg-black p-3 flex justify-between items-center flex-shrink-0">
+        <div className="bg-white rounded-t-xl shadow-[0_4px_20px_rgba(0,0,0,0.15)] border border-[var(--color-gray-15)] w-[700px] max-w-[calc(100vw-48px)] h-[500px] flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 duration-200">
+          
+          {/* Header */}
+          <div className="bg-[var(--color-ink)] p-3 flex justify-between items-center flex-shrink-0">
             <div className="flex items-center gap-2">
-               <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-black font-bold text-sm">
+               <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-black font-display font-bold text-sm">
                   {currentUser.name.charAt(0)}
                </div>
-              <h3 className="font-bold text-white text-[15px]">Messages</h3>
+              <h3 className="font-display font-bold uppercase tracking-widest text-white text-[15px]">Inbox</h3>
             </div>
-            <div className="flex items-center gap-2">
-              <button onClick={() => setIsMaximized(false)} className="text-gray-400 hover:text-white transition-colors p-1" title="Minimize">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 12h-15" />
-                </svg>
-              </button>
-              <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-theme-coral transition-colors p-1" title="Close">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+            
+            <div className="flex items-center gap-6">
+              {/* Tabs */}
+              <div className="flex items-center gap-4 text-[12px] font-mono uppercase tracking-widest text-white font-bold">
+                <span className="cursor-pointer border-b-2 border-white pb-0.5">Messages</span>
+                <span className="cursor-pointer text-[var(--color-gray-40)] hover:text-white transition-colors pb-0.5">Notifications</span>
+              </div>
+              
+              <div className="flex items-center gap-2 border-l border-[var(--color-gray-60)] pl-4">
+                <button onClick={() => setIsMaximized(false)} className="text-[var(--color-gray-40)] hover:text-white transition-colors p-1" title="Minimize">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 12h-15" />
+                  </svg>
+                </button>
+                <button onClick={() => setIsOpen(false)} className="text-[var(--color-gray-40)] hover:text-[var(--color-error)] transition-colors p-1" title="Close">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
           
@@ -335,14 +346,14 @@ export function ChatWidget() {
       {!isOpen && (
         <button 
           onClick={() => setIsOpen(true)}
-          className="mb-6 bg-black text-theme-gold px-6 py-3.5 rounded-full font-semibold shadow-[0_4px_14px_rgba(0,0,0,0.15)] hover:scale-105 transition-transform duration-300 flex items-center gap-2 relative"
+          className="mb-6 bg-[var(--color-ink)] text-[var(--color-white)] px-6 py-3.5 rounded-full font-display font-bold uppercase tracking-widest shadow-[0_4px_14px_rgba(0,0,0,0.15)] hover:scale-105 transition-transform duration-300 flex items-center gap-2 relative"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
             <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.76c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 011.037-.443 48.282 48.282 0 005.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
           </svg>
-          <span className="hidden sm:inline">Messages</span>
+          <span className="hidden sm:inline">Inbox</span>
           {totalUnread > 0 && (
-            <span className="absolute top-0 right-0 w-3.5 h-3.5 bg-theme-coral rounded-full border-2 border-black"></span>
+            <span className="absolute top-0 right-0 w-3.5 h-3.5 bg-[var(--color-error)] rounded-full border-2 border-[var(--color-ink)]"></span>
           )}
         </button>
       )}

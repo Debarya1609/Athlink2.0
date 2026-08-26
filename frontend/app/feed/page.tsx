@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { PostCreationBox } from '../../components/feed/PostCreationBox';
+
 import { FeedPost } from '../../components/feed/FeedPost';
 import api from '@/lib/api';
 
@@ -73,11 +73,6 @@ export default function FeedPage() {
           ))}
         </div>
       </div>
-
-      <div className="lane-line"></div>
-
-      {/* Post Creation (Now beneath Stories) */}
-      <PostCreationBox onPostCreated={fetchPosts} />
 
       <div className="lane-line"></div>
 
