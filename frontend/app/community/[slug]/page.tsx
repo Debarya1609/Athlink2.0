@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { use } from 'react';
 import { FeedPost } from '@/components/feed/FeedPost';
 import { PostCreationBox } from '@/components/feed/PostCreationBox';
 import { useRouter } from 'next/navigation';
@@ -19,7 +19,8 @@ const MOCK_COMMUNITY_POSTS = [
   }
 ];
 
-export default function CommunitySlugPage({ params }: { params: { slug: string } }) {
+export default function CommunitySlugPage({ params }: { params: any }) {
+  const unwrappedParams = use(params as any) as { slug: string };
   const router = useRouter();
   
   return (
@@ -34,7 +35,7 @@ export default function CommunitySlugPage({ params }: { params: { slug: string }
         </button>
         <div className="flex flex-col">
           <h1 className="font-display text-2xl font-extrabold text-[var(--color-ink)] uppercase tracking-wide">
-            {decodeURIComponent(params.slug).replace(/-/g, ' ')}
+            {decodeURIComponent(unwrappedParams.slug).replace(/-/g, ' ')}
           </h1>
           <p className="text-[var(--color-gray-60)] text-[12px] font-mono mt-0.5 uppercase">12.4k Members • Public</p>
         </div>
