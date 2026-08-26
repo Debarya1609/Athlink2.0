@@ -74,7 +74,20 @@ export default function FeedPage() {
         </div>
       </div>
 
-      <div className="lane-line"></div>
+      <div className="border-b border-[var(--color-gray-15)]"></div>
+
+      {/* Sort / Filter Bar */}
+      <div className="flex items-center justify-between px-4 md:px-6 py-3 border-b border-[var(--color-gray-15)] bg-[var(--color-white)]">
+        <span className="font-display text-[12px] font-bold text-[var(--color-ink)] uppercase tracking-wider hidden sm:block">Feed</span>
+        <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto justify-between sm:justify-end">
+          <span className="text-[10px] font-mono text-[var(--color-gray-40)] uppercase tracking-widest hidden xs:block">Sort by:</span>
+          <div className="flex items-center gap-4">
+             <button className="text-[11px] sm:text-[12px] font-bold text-[var(--color-ink)] uppercase tracking-wider border-b-2 border-[var(--color-ink)] pb-1" onClick={fetchPosts}>Following</button>
+             <button className="text-[11px] sm:text-[12px] font-bold text-[var(--color-gray-40)] uppercase tracking-wider hover:text-[var(--color-ink)] pb-1 transition-colors" onClick={fetchPosts}>Organizations</button>
+             <button className="text-[11px] sm:text-[12px] font-bold text-[var(--color-gray-40)] uppercase tracking-wider hover:text-[var(--color-ink)] pb-1 transition-colors" onClick={fetchPosts}>Discover</button>
+          </div>
+        </div>
+      </div>
 
       {/* Feed Posts */}
       <div className="w-full flex flex-col">

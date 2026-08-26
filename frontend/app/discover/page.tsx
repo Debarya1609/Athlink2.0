@@ -1,107 +1,156 @@
 'use client';
 
-import React, { Suspense } from 'react';
+import React, { useState, useEffect } from 'react';
+import { FeedPost } from '../../components/feed/FeedPost';
 import { mockUsers } from '@/lib/mockData';
 import Link from 'next/link';
-
-function CuratedRow({ title, users }: { title: string, users: typeof mockUsers }) {
-  if (users.length === 0) return null;
-
-  return (
-    <div className="mb-10">
-      <div className="flex items-center justify-between mb-4 px-4 md:px-6">
-        <h2 className="font-display text-xl font-bold text-[var(--color-ink)] uppercase tracking-wide">{title}</h2>
-        <button className="text-[12px] font-bold text-[var(--color-gray-60)] uppercase tracking-widest hover:text-[var(--color-ink)] transition-colors">See All</button>
-      </div>
-      
-      <div className="flex overflow-x-auto gap-4 px-4 md:px-6 pb-4 no-scrollbar snap-x">
-        {users.map(user => (
-          <div key={user.id} className="snap-start shrink-0 w-[240px] border border-[var(--color-gray-15)] bg-[var(--color-white)] p-5 flex flex-col items-center text-center relative group hover:border-[var(--color-ink)] transition-colors">
-            
-            {/* Availability Dot */}
-            {user.available_for_trials && (
-              <div className="absolute top-4 right-4 flex items-center justify-center">
-                <div className="w-2 h-2 rounded-full bg-[image:var(--image-gold-shine)]"></div>
-              </div>
-            )}
-
-            {/* Avatar */}
-            <div className="w-20 h-20 rounded-full border border-[var(--color-gray-15)] bg-[var(--color-paper)] overflow-hidden flex items-center justify-center mb-3">
-              {user.photo_url ? (
-                <img src={user.photo_url} alt={user.name} className="w-full h-full object-cover" />
-              ) : (
-                <span className="font-display font-bold text-[var(--color-gray-40)] text-2xl">{user.name.charAt(0)}</span>
-              )}
-            </div>
-
-            {/* Info */}
-            <div className="flex flex-col gap-1 w-full mb-4">
-              <h3 className="font-display font-extrabold text-[18px] text-[var(--color-ink)] leading-tight truncate uppercase tracking-wide">{user.name}</h3>
-              
-              <div className="flex items-center justify-center gap-1.5 mt-0.5">
-                <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest border border-[var(--color-ink)] text-[var(--color-ink)]`}>
-                  {user.role}
-                </span>
-              </div>
-
-              <div className="text-[12px] text-[var(--color-gray-60)] font-mono mt-2 flex flex-col gap-1">
-                {user.sport && (
-                  <div className="truncate text-center">SPRT: {user.sport}</div>
-                )}
-                {user.city && (
-                  <div className="truncate text-center">LOC: {user.city}</div>
-                )}
-              </div>
-            </div>
-
-            {/* CTA */}
-            <div className="mt-auto w-full pt-4 border-t border-[var(--color-gray-15)]">
-              <Link href={`/profile/${user.id}`} className="block w-full py-2 bg-[var(--color-ink)] text-[var(--color-white)] text-[12px] font-bold uppercase tracking-widest text-center hover:bg-[var(--color-gray-60)] transition-colors">
-                View Profile
-              </Link>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function DiscoverContent() {
-  const topProspects = mockUsers.filter(u => u.role === 'athlete').slice(0, 6);
-  const eliteAcademies = mockUsers.filter(u => u.role === 'academy').slice(0, 6);
-  const availableForTrials = mockUsers.filter(u => u.available_for_trials).slice(0, 6);
-  const topCoaches = mockUsers.filter(u => u.role === 'coach').slice(0, 6);
-
-  return (
-    <div className="flex flex-col min-h-screen bg-[var(--color-paper)] md:bg-[var(--color-white)]">
-      {/* Header */}
-      <div className="px-4 md:px-6 py-6 border-b border-[var(--color-gray-15)] bg-[var(--color-white)] mb-6">
-        <h1 className="font-display text-3xl font-extrabold text-[var(--color-ink)] uppercase tracking-wide">Explore</h1>
-        <p className="text-[var(--color-gray-60)] text-[13px] font-mono mt-1 uppercase">Discover athletes, coaches, and organizations</p>
-      </div>
-
-      {/* Curated Rows */}
-      <div className="flex flex-col">
-        <CuratedRow title="Top Prospects" users={topProspects} />
-        <div className="lane-line mb-10 mx-4 md:mx-6" />
-        
-        <CuratedRow title="Elite Academies" users={eliteAcademies} />
-        <div className="lane-line mb-10 mx-4 md:mx-6" />
-        
-        <CuratedRow title="Available for Trials" users={availableForTrials} />
-        <div className="lane-line mb-10 mx-4 md:mx-6" />
-        
-        <CuratedRow title="Top Coaches" users={topCoaches} />
-      </div>
-    </div>
-  );
-}
+import api from '@/lib/api';
 
 export default function DiscoverPage() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+  
+  const [locationConsent, setLocationConsent] = useState(false);
+  const [activeFilter, setActiveFilter] = useState('All');
+  
+  const [posts, setPosts] = useState<any[]>([]);
+
+  // Instant Search Dropdown
+  const dropdownResults = searchQuery.startsWith('@') 
+    ? mockUsers.filter(u => u.name.toLowerCase().includes(searchQuery.slice(1).toLowerCase()))
+    : [];
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      setHasSearched(true);
+      setIsDropdownOpen(false);
+    }
+  };
+
+  // Fetch mock posts for the discover feed
+  useEffect(() => {
+    api.get('/feed')
+      .then(res => setPosts(res.data.data || []))
+      .catch(console.error);
+  }, []);
+
+  const handleLocationRequest = () => {
+    // Mock location request
+    if (confirm("Athlink would like to use your location to find nearby athletes, coaches, and turfs.")) {
+      setLocationConsent(true);
+    }
+  };
+
   return (
-    <Suspense fallback={<div className="flex h-screen items-center justify-center bg-[var(--color-paper)] font-mono text-[var(--color-gray-60)] uppercase">Loading...</div>}>
-      <DiscoverContent />
-    </Suspense>
+    <div className="flex flex-col min-h-screen bg-[var(--color-white)] w-full">
+      {/* Search Header */}
+      <div className="p-4 md:p-6 border-b border-[var(--color-gray-15)]">
+        <form onSubmit={handleSearchSubmit} className="relative w-full">
+          <div className="flex items-center bg-[var(--color-paper)] border border-[var(--color-gray-15)] rounded-full px-4 py-3 focus-within:border-[var(--color-ink)] transition-colors relative">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 text-[var(--color-gray-40)] mr-3">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+            </svg>
+            <input 
+              type="text" 
+              placeholder="Search @username..." 
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setIsDropdownOpen(true);
+                setHasSearched(false);
+              }}
+              className="flex-1 bg-transparent outline-none text-[15px] font-medium text-[var(--color-ink)] placeholder-[var(--color-gray-40)]"
+            />
+          </div>
+
+          {/* Instant Dropdown */}
+          {isDropdownOpen && searchQuery.startsWith('@') && dropdownResults.length > 0 && (
+            <div className="absolute top-full left-0 w-full mt-2 bg-white border border-[var(--color-gray-15)] shadow-xl z-50 rounded-lg overflow-hidden">
+              {dropdownResults.slice(0, 5).map(user => (
+                <div key={user.id} onClick={() => { setSearchQuery('@' + user.name); setIsDropdownOpen(false); setHasSearched(true); }} className="flex items-center gap-3 p-3 hover:bg-[var(--color-paper)] cursor-pointer border-b border-[var(--color-gray-15)] last:border-b-0">
+                  <div className="w-10 h-10 rounded-full bg-[var(--color-gray-15)] flex items-center justify-center overflow-hidden">
+                    {user.photo_url ? <img src={user.photo_url} alt={user.name} /> : <span className="font-bold text-[var(--color-ink)]">{user.name.charAt(0)}</span>}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-bold text-[14px] text-[var(--color-ink)]">{user.name}</span>
+                    <span className="text-[11px] uppercase tracking-widest font-mono text-[var(--color-gray-60)]">{user.role}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </form>
+
+        {/* Funnel Filters */}
+        <div className="mt-4 flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
+          {['All', 'Turfs', 'Coaches', 'Athletes', 'Announcements', 'Trials'].map(filter => (
+            <button 
+              key={filter}
+              onClick={() => setActiveFilter(filter)}
+              className={`px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest whitespace-nowrap transition-colors border ${
+                activeFilter === filter 
+                  ? 'bg-[var(--color-ink)] text-white border-[var(--color-ink)]' 
+                  : 'bg-transparent text-[var(--color-gray-60)] border-[var(--color-gray-15)] hover:border-[var(--color-ink)] hover:text-[var(--color-ink)]'
+              }`}
+            >
+              {filter}
+            </button>
+          ))}
+        </div>
+
+        {/* Location Sharing Prompt */}
+        {!locationConsent && (
+          <div className="mt-4 bg-[var(--color-paper)] border border-[var(--color-gray-15)] p-3 rounded flex justify-between items-center">
+            <span className="text-[12px] text-[var(--color-ink)] font-medium">Find nearby {activeFilter !== 'All' ? activeFilter.toLowerCase() : 'places and people'}</span>
+            <button onClick={handleLocationRequest} className="text-[10px] font-bold uppercase tracking-widest border border-[var(--color-ink)] px-3 py-1 text-[var(--color-ink)] hover:bg-[var(--color-ink)] hover:text-white transition-colors">
+              Enable Location
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Main Discover Content */}
+      <div className="flex-1 w-full bg-[var(--color-white)]">
+        {hasSearched ? (
+          /* Search Results (Compact Card Format) */
+          <div className="p-4 md:p-6 grid grid-cols-1 xs:grid-cols-2 gap-4">
+            <h3 className="col-span-full font-display font-bold uppercase tracking-widest text-[12px] text-[var(--color-gray-60)] mb-2">Search Results for {searchQuery}</h3>
+            {dropdownResults.length > 0 ? dropdownResults.map(user => (
+              <Link href={`/profile/${user.id}`} key={user.id} className="border border-[var(--color-gray-15)] p-4 flex flex-col items-center text-center hover:border-[var(--color-ink)] transition-colors">
+                <div className="w-16 h-16 rounded-full bg-[var(--color-gray-15)] mb-3 overflow-hidden">
+                  {user.photo_url ? <img src={user.photo_url} alt={user.name} /> : null}
+                </div>
+                <h4 className="font-bold text-[14px] uppercase tracking-wide">{user.name}</h4>
+                <span className="text-[10px] text-[var(--color-gray-60)] uppercase tracking-widest mt-1">{user.role}</span>
+              </Link>
+            )) : (
+              <div className="col-span-full py-10 text-center text-[var(--color-gray-40)] font-mono uppercase tracking-widest text-[12px]">No users found</div>
+            )}
+          </div>
+        ) : (
+          /* Default Discover Feed */
+          <div className="flex flex-col w-full">
+            {posts.map(post => (
+              <FeedPost 
+                key={post.id}
+                id={post.id}
+                name={post.author?.name || 'Unknown User'}
+                avatar={post.author?.photo_url || ''}
+                roleBadge={post.author?.role || 'User'}
+                timestamp={new Date(post.created_at).toLocaleDateString()}
+                content={post.content}
+                image={post.media_url || undefined}
+                likes={post.stats.likes_count}
+                comments={post.stats.comments_count}
+                hasLiked={post.stats.liked_by_me}
+                onInteraction={() => {}}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
