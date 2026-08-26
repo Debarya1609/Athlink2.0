@@ -1,6 +1,7 @@
 import express from 'express'
 import http from 'http'
-import { initSocket } from './sockets/socketManager'
+import { initSocket } from './sockets/gateway'
+import { connectRedis } from './services/sessionCache'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import authRoutes from './routes/authRoutes'
@@ -13,6 +14,10 @@ import notificationRoutes from './routes/notificationRoutes'
 import mediaRoutes from './routes/mediaRoutes'
 
 dotenv.config()
+
+connectRedis().catch(console.error);
+import './workers/persistenceWorker';
+import './workers/fanoutWorker';
 
 const app = express()
 
