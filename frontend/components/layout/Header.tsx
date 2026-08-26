@@ -186,11 +186,19 @@ export function Header() {
                           <div className="w-2 h-2 mt-2 rounded-full flex-shrink-0">
                             {!notification.read && <div className="w-full h-full bg-theme-cobalt rounded-full"></div>}
                           </div>
-                          <div className="flex-1 min-w-0">
+                          <div className="flex-1 min-w-0 pr-2">
                             <p className="text-[13px] text-theme-charcoal leading-snug">{notification.message}</p>
                             <p className="text-[11px] text-theme-slate mt-1 font-medium">
                               {new Date(notification.created_at).toLocaleDateString()}
                             </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); api.delete(`/notifications/${notification.id}`).then(() => setNotifications(prev => prev.filter(x => x.id !== notification.id))); }}
+                              className="text-[10px] uppercase font-bold text-red-500 hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                            >
+                              Delete
+                            </button>
                           </div>
                         </div>
                       </div>

@@ -1,13 +1,18 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { CommentSection } from './CommentSection';
+import { FollowButton } from '../profile/FollowButton';
+import { MoreHorizontal, Bookmark, Flag } from 'lucide-react';
 import api from '@/lib/api';
+import { useSocket } from '@/lib/SocketContext';
 
 export type PostType = 'general' | 'announcement' | 'opportunity' | 'result';
 
 interface FeedPostProps {
   id: string;
+  authorId: string;
   name: string;
   avatar: string;
   roleBadge?: string;
@@ -18,24 +23,62 @@ interface FeedPostProps {
   comments: number;
   hasLiked?: boolean;
   postType?: PostType;
+  isDetailView?: boolean;
   onInteraction?: () => void;
 }
 
 export function FeedPost({ 
   id, 
+  authorId,
   name, 
   avatar, 
   roleBadge = 'athlete', 
   timestamp, 
   content, 
   image, 
-  likes, 
-  comments, 
-  hasLiked = false, 
+  likes: initialLikes, 
+  comments: initialComments, 
+  hasLiked: initialHasLiked = false, 
   postType = 'general',
+  isDetailView = false,
   onInteraction 
 }: FeedPostProps) {
   const [isLiking, setIsLiking] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const { socket } = useSocket();
+
+  // Local state for optimistic/real-time updates
+  const [likes, setLikes] = useState(initialLikes);
+  const [comments, setComments] = useState(initialComments);
+  const [hasLiked, setHasLiked] = useState(initialHasLiked);
+
+  useEffect(() => {
+    setLikes(initialLikes);
+    setComments(initialComments);
+    setHasLiked(initialHasLiked);
+  }, [initialLikes, initialComments, initialHasLiked]);
+
+  useEffect(() => {
+    if (!socket) return;
+    const handleInteraction = (data: any) => {
+      if (data.postId === id) {
+        if (data.type === 'like') {
+          // If the user caused the like, we already updated optimistically
+          setLikes(prev => prev + 1);
+        } else if (data.type === 'unlike') {
+          setLikes(prev => Math.max(0, prev - 1));
+        } else if (data.type === 'comment') {
+          setComments(prev => prev + 1);
+        } else if (data.type === 'delete_comment') {
+          setComments(prev => Math.max(0, prev - 1));
+        }
+      }
+    };
+    socket.on('post_interaction', handleInteraction);
+    return () => {
+      socket.off('post_interaction', handleInteraction);
+    };
+  }, [socket, id]);
 
   const renderContent = (text: string) => {
     return text.split(' ').map((word, idx) => {
@@ -46,14 +89,27 @@ export function FeedPost({
     });
   };
 
-  const handleLike = async () => {
+  const handleLike = async (e: React.MouseEvent) => {
+    e.preventDefault();
     if (isLiking) return;
     setIsLiking(true);
+
+    // Optimistic UI
+    setHasLiked(!hasLiked);
+    setLikes(prev => hasLiked ? prev - 1 : prev + 1);
+
     try {
-      await api.post(`/feed/${id}/like`);
+      if (hasLiked) {
+        await api.delete(`/feed/${id}/like`);
+      } else {
+        await api.post(`/feed/${id}/like`);
+      }
       if (onInteraction) onInteraction();
     } catch (err) {
-      console.error('Failed to like post', err);
+      console.error('Failed to toggle like', err);
+      // Revert optimistic
+      setHasLiked(hasLiked);
+      setLikes(prev => hasLiked ? prev + 1 : prev - 1);
     } finally {
       setIsLiking(false);
     }
@@ -104,21 +160,21 @@ export function FeedPost({
   };
 
   return (
-    <div className="bg-[var(--color-white)] w-full transition-all duration-300">
-      <div className="p-4 md:p-6 pb-2">
+    <div className="bg-[var(--color-white)] w-full transition-all duration-300 relative group">
+      <div className="p-4 md:p-6 pb-2 relative">
         {/* Header */}
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-[var(--color-paper)] flex-shrink-0 flex items-center justify-center text-[var(--color-gray-60)] font-semibold overflow-hidden border border-[var(--color-gray-15)]">
+            <Link href={`/profile/${authorId}`} className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-[var(--color-paper)] flex-shrink-0 flex items-center justify-center text-[var(--color-gray-60)] font-semibold overflow-hidden border border-[var(--color-gray-15)] hover:opacity-80 transition-opacity">
               {avatar ? (
                 <img src={avatar} alt={name} className="w-full h-full object-cover" />
               ) : (
                 <span className="text-lg">{name.charAt(0)}</span>
               )}
-            </div>
+            </Link>
             <div className="flex flex-col -mt-0.5">
               <div className="flex items-center flex-wrap gap-2">
-                <span className="font-display font-bold text-[var(--color-ink)] text-[16px] md:text-[18px] tracking-wide">{name}</span>
+                <Link href={`/profile/${authorId}`} className="font-display font-bold text-[var(--color-ink)] text-[16px] md:text-[18px] tracking-wide hover:underline">{name}</Link>
                 {roleBadge && (
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest ${getRoleBadgeStyle(roleBadge)}`}>
                     {roleBadge}
@@ -129,27 +185,69 @@ export function FeedPost({
             </div>
           </div>
           
-          {postType !== 'general' && (
-            <div className="ml-2 flex-shrink-0">
-              {renderPostTypeChip()}
+          <div className="flex items-center gap-3">
+            {postType !== 'general' && (
+              <div className="flex-shrink-0">
+                {renderPostTypeChip()}
+              </div>
+            )}
+            <div className="relative">
+              <button 
+                onClick={(e) => { e.preventDefault(); setShowMenu(!showMenu); }}
+                className="text-[var(--color-gray-40)] hover:text-[var(--color-ink)] transition-colors p-1"
+              >
+                <MoreHorizontal size={20} />
+              </button>
+              {showMenu && (
+                <div className="absolute right-0 mt-2 w-48 bg-[var(--color-white)] border border-[var(--color-gray-15)] rounded-xl shadow-lg z-10 py-1 overflow-hidden">
+                  <div className="px-4 py-2 border-b border-[var(--color-gray-15)]">
+                    <FollowButton userId={authorId} initialIsFollowing={false} className="w-full justify-center" />
+                  </div>
+                  <button className="w-full text-left px-4 py-3 text-[14px] text-[var(--color-ink)] hover:bg-[var(--color-paper)] flex items-center gap-3 transition-colors">
+                    <Bookmark size={16} /> Save Post
+                  </button>
+                  <button className="w-full text-left px-4 py-3 text-[14px] text-red-500 hover:bg-red-50 flex items-center gap-3 transition-colors" onClick={() => alert('Reporting coming soon!')}>
+                    <Flag size={16} /> Report
+                  </button>
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
 
-        {/* Content */}
-        <div className="ml-[52px] md:ml-[56px] mb-3">
-          <div className="text-[var(--color-ink)] text-[15px] leading-relaxed font-normal whitespace-pre-wrap">
-            <p>{renderContent(content)}</p>
-          </div>
-          
-          {image && (
-            <div className="mt-3 rounded-lg overflow-hidden border border-[var(--color-gray-15)] relative">
-              <img src={image} alt="Post content" className="w-full max-h-[500px] object-contain bg-[var(--color-paper)]" />
+        {/* Content Wrapper */}
+        {isDetailView ? (
+          <div className="block">
+            <div className="ml-[52px] md:ml-[56px] mb-3 transition-colors rounded-xl -mx-3 px-3 py-2 -mt-2">
+              <div className="text-[var(--color-ink)] text-[15px] leading-relaxed font-normal whitespace-pre-wrap">
+                <p>{renderContent(content)}</p>
+              </div>
+              
+              {image && (
+                <div className="mt-3 rounded-lg overflow-hidden border border-[var(--color-gray-15)] relative">
+                  <img src={image} alt="Post content" className="w-full max-h-[500px] object-contain bg-[var(--color-paper)]" />
+                </div>
+              )}
             </div>
-          )}
+          </div>
+        ) : (
+          <Link href={`/post/${id}`} className="block group">
+            <div className="ml-[52px] md:ml-[56px] mb-3 group-hover:bg-[var(--color-paper)] transition-colors rounded-xl -mx-3 px-3 py-2 -mt-2">
+              <div className="text-[var(--color-ink)] text-[15px] leading-relaxed font-normal whitespace-pre-wrap">
+                <p>{renderContent(content)}</p>
+              </div>
+              
+              {image && (
+                <div className="mt-3 rounded-lg overflow-hidden border border-[var(--color-gray-15)] relative">
+                  <img src={image} alt="Post content" className="w-full max-h-[500px] object-contain bg-[var(--color-paper)]" />
+                </div>
+              )}
+            </div>
+          </Link>
+        )}
 
-          {/* Actions (Threads style: icon only, mono counts) */}
-          <div className="flex items-center gap-6 mt-4 pb-2">
+        {/* Actions (Threads style: icon only, mono counts) */}
+        <div className="ml-[52px] md:ml-[56px] flex items-center gap-6 mt-2 pb-2">
             <button 
               onClick={handleLike}
               disabled={isLiking}
@@ -161,26 +259,25 @@ export function FeedPost({
               {likes > 0 && <span className="font-mono text-[12px]">{likes}</span>}
             </button>
 
-            <button className="flex items-center gap-1.5 text-[14px] text-[var(--color-gray-60)] hover:text-[var(--color-ink)] transition-colors group">
+            <button onClick={(e) => e.preventDefault()} className="flex items-center gap-1.5 text-[14px] text-[var(--color-gray-60)] hover:text-[var(--color-ink)] transition-colors group">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 group-hover:scale-110 transition-transform">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z" />
               </svg>
               {comments > 0 && <span className="font-mono text-[12px]">{comments}</span>}
             </button>
 
-            <button className="flex items-center gap-1.5 text-[14px] text-[var(--color-gray-60)] hover:text-[var(--color-ink)] transition-colors group">
+            <button onClick={(e) => e.preventDefault()} className="flex items-center gap-1.5 text-[14px] text-[var(--color-gray-60)] hover:text-[var(--color-ink)] transition-colors group">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 group-hover:scale-110 transition-transform">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 00-3.7-3.7 48.678 48.678 0 00-7.324 0 4.006 4.006 0 00-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3l-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 003.7 3.7 48.656 48.656 0 007.324 0 4.006 4.006 0 003.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3l-3 3" />
               </svg>
             </button>
 
-            <button className="flex items-center gap-1.5 text-[14px] text-[var(--color-gray-60)] hover:text-[var(--color-ink)] transition-colors group ml-auto">
+            <button onClick={(e) => e.preventDefault()} className="flex items-center gap-1.5 text-[14px] text-[var(--color-gray-60)] hover:text-[var(--color-ink)] transition-colors group ml-auto">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 group-hover:scale-110 transition-transform">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.125A59.769 59.769 0 0121.485 12 59.768 59.768 0 013.27 20.875L5.999 12Zm0 0h7.5" />
               </svg>
             </button>
           </div>
-        </div>
       </div>
       
       <div className="lane-line"></div>

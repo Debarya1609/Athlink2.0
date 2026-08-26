@@ -7,7 +7,8 @@ import {
   getPostComments,
   likePost,
   unlikePost,
-  getUserPosts
+  getUserPosts,
+  deleteComment
 } from '../controllers/feedController'
 import { authMiddleware } from '../middleware/authMiddleware'
 
@@ -20,6 +21,7 @@ router.delete('/:id', authMiddleware, deletePost)
 router.post('/:id/like', authMiddleware, likePost)
 router.delete('/:id/like', authMiddleware, unlikePost)
 router.post('/:id/comment', authMiddleware, commentOnPost)
+router.delete('/comment/:id', authMiddleware, deleteComment)
 router.get('/:id/comments', authMiddleware, getPostComments)
 
 export default router
