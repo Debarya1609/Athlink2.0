@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import api from '@/lib/api';
 
 export function RightSidebar({ children }: { children?: React.ReactNode }) {
-  const [suggestedOrgs, setSuggestedOrgs] = useState([]);
-  const [trendingListings, setTrendingListings] = useState([]);
+  const [suggestedOrgs, setSuggestedOrgs] = useState<any[]>([]);
+  const [trendingListings, setTrendingListings] = useState<any[]>([]);
 
   useEffect(() => {
     // Real-time logic implementation placeholder

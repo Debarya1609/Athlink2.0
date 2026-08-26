@@ -1,6 +1,5 @@
 import React from 'react';
 import { Sidebar } from '../../components/layout/Sidebar';
-import { Header } from '../../components/layout/Header';
 import { ChatWidget } from '../../components/layout/ChatWidget';
 import { BottomNav } from '../../components/layout/BottomNav';
 
